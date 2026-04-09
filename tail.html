@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head> 
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EnjoymentClan - Home</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#FF5E14',
+            secondary: '#1A1A1A',
+            accent: '#FF9E00',
+            dark: '#121212',
+            light: '#FFFFFF',
+            gray: '#F5F5F5',
+            text: '#333333',
+            textLight: '#777777',
+          },
+          fontFamily: {
+            poppins: ['Poppins', 'sans-serif'],
+          },
+          boxShadow: {
+            sm: '0 2px 8px rgba(0,0,0,0.1)',
+            md: '0 4px 12px rgba(0,0,0,0.15)',
+            lg: '0 8px 24px rgba(0,0,0,0.2)',
+          },
+          borderRadius: {
+            custom: '8px',
+          },
+          animation: {
+            bounce: 'bounce 2s infinite',
+          },
+          keyframes: {
+            bounce: {
+              '0%, 20%, 50%, 80%, 100%': { transform: 'translateY(0) translateX(-50%)' },
+              '40%': { transform: 'translateY(-20px) translateX(-50%)' },
+              '60%': { transform: 'translateY(-10px) translateX(-50%)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer components {
+      .btn {
+        @apply inline-block px-7 py-3 rounded-custom font-semibold uppercase tracking-wider text-sm transition-all duration-300 ease-in-out cursor-pointer text-center border-2 border-transparent;
+      }
+      .btn-primary {
+        @apply bg-primary text-light hover:bg-[#E04E00] hover:-translate-y-1 hover:shadow-md;
+      }
+      .btn-outline {
+        @apply bg-transparent text-primary border-primary hover:bg-primary hover:text-light hover:-translate-y-1 hover:shadow-md;
+      }
+      .btn-small {
+        @apply px-4 py-2 text-xs;
+      }
+      .section-title {
+        @apply relative inline-block mb-8 text-4xl font-bold;
+      }
+      .section-title:after {
+        @apply content-[''] absolute -bottom-2 left-0 w-16 h-1 bg-primary;
+      }
+      .section-subtitle {
+        @apply block text-sm uppercase tracking-widest text-primary mb-4 font-semibold;
+      }
+    }
+
+     /* Floating circles background */
+    .circle {
+      position: absolute;
+      display: block;
+      list-style: none;
+      background: rgba(255, 255, 255, 0.2);
+      bottom: -150px;
+      animation: animate 25s linear infinite;
+      border-radius: 50%;
+    }
+    
+    @keyframes animate {
+      0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-1000px) rotate(720deg);
+        opacity: 0;
+      }
+    }
+    
+    /* Circle sizes and positions */
+    .circle1 {
+      width: 80px;
+      height: 80px;
+      left: 25%;
+      animation-delay: 0s;
+    }
+    
+    .circle2 {
+      width: 20px;
+      height: 20px;
+      left: 10%;
+      animation-delay: 2s;
+      animation-duration: 12s;
+    }
+    
+    .circle3 {
+      width: 20px;
+      height: 20px;
+      left: 70%;
+      animation-delay: 4s;
+    }
+    
+    .circle4 {
+      width: 60px;
+      height: 60px;
+      left: 40%;
+      animation-delay: 0s;
+      animation-duration: 18s;
+    }
+    
+    .circle5 {
+      width: 20px;
+      height: 20px;
+      left: 65%;
+      animation-delay: 0s;
+    }
+    
+    .circle6 {
+      width: 110px;
+      height: 110px;
+      left: 75%;
+      animation-delay: 3s;
+    }
+    
+    .circle7 {
+      width: 150px;
+      height: 150px;
+      left: 35%;
+      animation-delay: 7s;
+    }
+    
+    .circle8 {
+      width: 25px;
+      height: 25px;
+      left: 50%;
+      animation-delay: 15s;
+      animation-duration: 45s;
+    }
+    
+    .circle9 {
+      width: 15px;
+      height: 15px;
+      left: 20%;
+      animation-delay: 2s;
+      animation-duration: 35s;
+    }
+    
+    .circle10 {
+      width: 150px;
+      height: 150px;
+      left: 85%;
+      animation-delay: 0s;
+      animation-duration: 11s;
+    }
+  </style>
+</head>
+<body class="font-poppins text-text">
+
+    <div class="fixed w-full h-full bg-gradient-to-l from-[#8f94fb] to-[#4e54c8] -z-50">
+    <ul class="circles">
+      <li class="circle circle1"></li>
+      <li class="circle circle2"></li>
+      <li class="circle circle3"></li>
+      <li class="circle circle4"></li>
+      <li class="circle circle5"></li>
+      <li class="circle circle6"></li>
+      <li class="circle circle7"></li>
+      <li class="circle circle8"></li>
+      <li class="circle circle9"></li>
+      <li class="circle circle10"></li>
+    </ul>
+  </div>
+
+  <!-- Navigation -->
+<header class="fixed top-0 left-0 w-full py-5 bg-dark z-50 shadow-md">
+  <div class="container mx-auto px-5 max-w-6xl">
+    <div class="flex justify-between items-center">
+      <div class="brand">
+        <a href="tail.html">
+          <img src="pics/white.png" alt="EnjoymentClan Logo" class="h-20">
+        </a>
+      </div>
+      
+      <nav class="main-nav hidden md:block">
+  <ul id="mainNav" class="flex items-center space-x-8">
+    <li><a href="#home" class="nav-link text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">HOME</a></li>
+    <li><a href="#about" class="nav-link text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">ABOUT US</a></li>
+    <li><a href="#services" class="nav-link text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">SERVICES</a></li>
+    <li><a href="#events" class="nav-link text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">EVENTS</a></li>
+    <li><a href="#merchandise" class="nav-link text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">MERCHANDISE</a></li>
+    <li><a href="ticketing.html" class="nav-link text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">TICKETING</a></li>
+    <li><a href="content.html" class="nav-link text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">CONTENT</a></li>
+    <li><a href="#join" class="nav-link text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">CONTACT US</a></li>
+    
+  </ul>
+</nav>
+      
+      <div class="mobile-menu-toggle md:hidden text-light text-2xl cursor-pointer">
+        <i class="fas fa-bars"></i>
+      </div>
+    </div>
+  </div>
+</header>
+
+  <!-- Hero Section -->
+  <section id="home" class="hero h-screen min-h-[700px] bg-gradient-to-b from-black/70 to-black/70 bg-[url('../assets/hero-bg.jpg')] bg-cover bg-center text-light flex flex-col justify-center items-center text-center relative pt-20">
+    <div class="hero-content max-w-4xl mx-auto px-5">
+      <h1 class="hero-title text-6xl md:text-7xl mb-5 uppercase tracking-wider">The Enjoyment Clan</h1>
+      <h2 class="hero-subtitle text-xl md:text-2xl font-light mb-10 tracking-wider">Creating good times
+and long lasting memories through
+entertainment.</h2>
+      <div class="hero-buttons flex flex-col sm:flex-row justify-center gap-5">
+        <a href="#join" class="btn btn-primary">Join The Movement</a>
+        <a href="#about" class="btn btn-outline">BOOK US NOW</a>
+      </div>
+    </div>
+    
+   
+    <div class="hero-scroll absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center text-light">
+        <span class="animate-[updown_2s_infinite]">Scroll Down</span>
+        <i class="fas fa-chevron-down mt-2 text-xl animate-[updown_2s_infinite]"></i>
+    </div>
+    <style>
+        @keyframes updown {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-20px); }
+            60% { transform: translateY(-10px); }
+        }
+    </style>
+  </section>
+
+  <!-- About Section -->
+  <section id="about" class="py-20 bg-light">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <div class="section-header text-center mb-12">
+        <span class="section-subtitle">Who We Are</span>
+        <h2 class="section-title">Creating Unforgettable Experiences</h2>
+      </div>
+      
+      <div class="about-content text-center">
+        <div class="about-text text-center">
+          <p class="mb-4">EnjoymentClan is a premier entertainment collective founded in 2020 by DJ KennyBlacks. We specialize in creating immersive experiences through music, dance, and visual arts.</p>
+          <p class="mb-8">Our team of talented professionals is dedicated to pushing creative boundaries and delivering exceptional entertainment for every occasion.</p>
+          <div class="stats-grid grid grid-cols-3 gap-5 mt-8">
+            <div class="stat-item text-center p-5 bg-gray rounded-custom">
+              <span class="stat-number block text-3xl font-bold text-primary mb-1">150+</span>
+              <span class="stat-label text-sm text-textLight">Events</span>
+            </div>
+            <div class="stat-item text-center p-5 bg-gray rounded-custom">
+              <span class="stat-number block text-3xl font-bold text-primary mb-1">25+</span>
+              <span class="stat-label text-sm text-textLight">Team Members</span>
+            </div>
+            <div class="stat-item text-center p-5 bg-gray rounded-custom">
+              <span class="stat-number block text-3xl font-bold text-primary mb-1">10K+</span>
+              <span class="stat-label text-sm text-textLight">Followers</span>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  </section>
+
+  <!-- Team Section -->
+  <section class="py-20 bg-gray">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <div class="section-header text-center mb-12">
+        <span class="section-subtitle">Meet The Family</span>
+        <h2 class="section-title">Our Core Team</h2>
+      </div>
+      
+      <div class="team-grid grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
+        <!-- Team Member 1 -->
+        <div class="team-card bg-light rounded-custom overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-3 hover:shadow-md">
+          <div class="team-image relative h-64 overflow-hidden">
+            <img src="pics/blacks.jpg" alt="DJ KennyBlacks" class="w-full h-full object-cover transition-all duration-300 group-hover:scale-105" style="object-position: center 10%;">
+            <div class="team-social absolute bottom-5 left-0 w-full flex justify-center gap-4 opacity-0 translate-y-5 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
+              <a href="#" class="w-10 h-10 flex items-center justify-center bg-primary text-light rounded-full transition-all duration-300 hover:bg-dark hover:-translate-y-1"><i class="fab fa-instagram"></i></a>
+              <a href="#" class="w-10 h-10 flex items-center justify-center bg-primary text-light rounded-full transition-all duration-300 hover:bg-dark hover:-translate-y-1"><i class="fab fa-twitter"></i></a>
+              <a href="#" class="w-10 h-10 flex items-center justify-center bg-primary text-light rounded-full transition-all duration-300 hover:bg-dark hover:-translate-y-1"><i class="fab fa-soundcloud"></i></a>
+            </div>
+          </div>
+          <div class="team-info p-6 text-center">
+            <h3 class="text-xl font-bold">DJ KennyBlacks</h3>
+            <p class="team-role text-primary font-semibold mb-4">Founder & CEO</p>
+            <p class="team-bio text-textLight text-sm">Deejay, sound engineer and web designer with valuable skills in music selection.
+Confident in succeeding complex tasks and processes within tight schedules. Tasks where I have an opportunity to solve problems brings the best out of me.</p>
+          </div>
+        </div>
+        
+        <!-- Team Member 2 -->
+        <div class="team-card bg-light rounded-custom overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-3 hover:shadow-md">
+          <div class="team-image relative h-64 overflow-hidden">
+            <img src="pics/dancer.jpg" alt="Jane Doe" class="w-full h-full object-cover object-top transition-all duration-300 group-hover:scale-105">
+            <div class="team-social absolute bottom-5 left-0 w-full flex justify-center gap-4 opacity-0 translate-y-5 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
+              <a href="#" class="w-10 h-10 flex items-center justify-center bg-primary text-light rounded-full transition-all duration-300 hover:bg-dark hover:-translate-y-1"><i class="fab fa-instagram"></i></a>
+              <a href="#" class="w-10 h-10 flex items-center justify-center bg-primary text-light rounded-full transition-all duration-300 hover:bg-dark hover:-translate-y-1"><i class="fab fa-tiktok"></i></a>
+            </div>
+          </div>
+          <div class="team-info p-6 text-center">
+            <h3 class="text-xl font-bold">Hillary Akoto</h3>
+            <p class="team-role text-primary font-semibold mb-4">Founder</p>
+            <p class="team-bio text-textLight text-sm">Marketing strategist
+Choreographer, content Guru and interior designer able to execute tasks and innovate new ideas to help suit our clients.</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="section-footer text-center mt-12">
+        <a href="about.html" class="btn btn-outline">View Full Team</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Services Section -->
+  <section id="services" class="py-20 bg-gradient-to-b from-dark to-black text-light">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <div class="section-header text-center mb-12">
+        <span class="section-subtitle">What We Offer</span>
+        <h2 class="section-title">Our Services</h2>
+      </div>
+      
+      <div class="services-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
+        <!-- Service 1 -->
+        <a href="event-djing.html" class="block">
+        <div class="service-card bg-light rounded-custom p-6 shadow-sm transition-all duration-300 hover:-translate-y-3 hover:shadow-md">
+          <i class="fas fa-music text-primary text-4xl mb-4"></i>
+          <h3 class="text-xl font-bold mb-2 text-text">Event Deejaying</h3>
+          <p class="text-text">Professional DJ services for weddings, corporate events, club events and private parties.</p>
+        </div>
+        </a>
+        
+        <!-- Service 2 -->
+        <a href="live-performances.html" class="block">
+        <div class="service-card bg-light rounded-custom p-6 shadow-sm transition-all duration-300 hover:-translate-y-3 hover:shadow-md">
+          <i class="fas fa-drum text-primary text-4xl mb-4"></i>
+          <h3 class="text-xl font-bold mb-2 text-text">Live Performances</h3>
+          <p class="text-text">Dynamic live shows featuring our talented DJs, dancers, and performers.</p>
+        </div>
+        </a>
+        
+        <!-- Service 3 -->
+        <a href="custom-entertainment.html" class="block">
+        <div class="service-card bg-light rounded-custom p-6 shadow-sm transition-all duration-300 hover:-translate-y-3 hover:shadow-md">
+          <i class="fas fa-cogs text-primary text-4xl mb-4"></i>
+          <h3 class="text-xl font-bold mb-2 text-text">Custom Entertainment Solutions</h3>
+          <p class="text-text">Tailored entertainment packages to fit your unique event needs and vision.</p>
+        </div>
+        </a>
+      </div>
+      
+      <div class="section-footer text-center mt-12">
+        <a href="#" class="btn btn-primary">Book Us Now</a>
+      </div>
+    </div>
+
+    <!-- Events section -->
+     
+    <section id="events" class="py-20 bg-light">
+      <div class="container mx-auto px-5 max-w-6xl">
+        <div class="section-header text-center mb-12">
+          <span class="section-subtitle">Experience The Clan</span>
+          <h2 class="section-title">Upcoming Events</h2>
+        </div>
+        
+        <div class="events-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
+          <!-- Event 1 -->
+          <div class="event-card bg-light rounded-custom overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-3 hover:shadow-md">
+            <div class="event-image h-48 overflow-hidden">
+              <img src="pics/poster1.jpg" alt="Urban Sunday" class="w-full h-full object-cover transition-all duration-300 hover:scale-105">
+            </div>
+            <div class="p-6">
+              <h3 class="text-xl font-bold mb-2 text-text">Urban Sunday</h3>
+              <p class="text-text mb-4">Join us for an unforgettable day of music, dance, and fun at our Urban sunday.</p>
+              <a href="#" class="btn btn-small btn-primary">Learn More</a>
+            </div>
+          </div>
+          
+          <!-- Event 2 -->
+          <div class="event-card bg-light rounded-custom overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-3 hover:shadow-md">
+            <div class="event-image h-48 overflow-hidden">
+              <img src="pics/poster2.jpg" alt="Winter Dance Party" class="w-full h-full object-cover transition-all duration-300 hover:scale-105">
+            </div>
+            <div class="p-6">
+              <h3 class="text-xl font-bold mb-2 text-text">Urban Sunday 2</h3>
+              <p class="text-text mb-4">Get ready to groove at our Urban sunday  with hot beats and cool vibes.</p>
+              <a href="#" class="btn btn-small btn-primary">Learn More</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  <section id="merchandise" class="py-20 bg-light">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <div class="section-header text-center mb-12">
+        <span class="section-subtitle">Represent The Clan</span>
+        <h2 class="section-title">Featured Merchandise</h2>
+      </div>
+      
+      <div class="merch-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
+        <!-- Product 1 -->
+        <div class="product-card bg-light rounded-custom overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-3 hover:shadow-md relative">
+            <div class="product-badge absolute top-4 right-4 bg-primary text-light px-4 py-1 rounded-full text-xs font-semibold z-10">Bestseller</div>
+            <div class="product-image h-72 overflow-hidden">
+            <img src="pics/tshirt1.png" alt="EnjoymentClan T-Shirt" class="w-full h-full object-cover transition-all duration-300 hover:scale-105">
+          </div>
+          <div class="product-info p-5">
+            <h3 class="text-lg font-bold">T-Shirt</h3>
+            <div class="product-meta flex justify-between items-center my-4">
+              <span class="product-price text-primary font-bold text-lg">KSH 700</span>
+            </div>
+            <a href="merchandise.html" class="btn btn-small">View Details</a>
+          </div>
+        </div>
+        
+        <!-- Product 2 -->
+        <div class="product-card bg-light rounded-custom overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-3 hover:shadow-md relative">
+          <div class="product-badge absolute top-4 right-4 bg-primary text-light px-4 py-1 rounded-full text-xs font-semibold z-10">New</div>
+          <div class="product-image h-72 overflow-hidden">
+            <img src="pics/hoddie1.png" alt="EnjoymentClan Hoodie" class="w-full h-full object-cover transition-all duration-300 hover:scale-105">
+          </div>
+          <div class="product-info p-5">
+            <h3 class="text-lg font-bold">Premium Hoodie</h3>
+            <div class="product-meta flex justify-between items-center my-4">
+              <span class="product-price text-primary font-bold text-lg">KSH 1200</span>
+            </div>
+            <a href="merchandise.html" class="btn btn-small">View Details</a>
+          </div>
+        </div>
+        
+        <!-- Product 3 -->
+        <div class="product-card bg-light rounded-custom overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-3 hover:shadow-md">
+          <div class="product-image h-72 overflow-hidden">
+            <img src="pics/tshirt2.png" alt="EnjoymentClan Cap" class="w-full h-full object-cover transition-all duration-300 hover:scale-105">
+          </div>
+          <div class="product-info p-5">
+            <h3 class="text-lg font-bold">T-Shirt</h3>
+            <div class="product-meta flex justify-between items-center my-4">
+              <span class="product-price text-primary font-bold text-lg">KSH 700 </span>
+            </div>
+            <a href="merchandise.html" class="btn btn-small">View Details</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="section-footer text-center mt-12">
+        <a href="merchandise.html" class="btn btn-primary">Shop All Merch</a>
+      </div>
+    </div>
+  </section>
+
+<!-- Join Section -->
+<section id="join" class="py-20 bg-gradient-to-b from-black/80 to-black/80 bg-[url('../assets/join-bg.jpg')] bg-cover bg-center text-light">
+  <div class="container mx-auto px-5 max-w-6xl">
+    <div class="join-content grid md:grid-cols-2 gap-12 items-center">
+      <div class="join-text">
+        <span class="section-subtitle text-light">Become Part of Us</span>
+        <h2 class="section-title text-light after:bg-light">Join EnjoymentClan</h2>
+        <p class="mb-6">We're always looking for talented individuals to join our growing family. Whether you're a DJ, dancer, producer, or creative professional, we'd love to hear from you.</p>
+        
+        <form class="join-form">
+          <div class="form-group mb-5">
+            <input type="text" placeholder="Your Name" required class="flex-1 px-4 py-3 rounded-custom border-0 focus:outline-none focus:ring-2 focus:ring-dark text-dark w-full px-4 py-3 rounded-custom border border-gray-300 font-poppins transition-all duration-300 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20">
+          </div>
+
+          <div class="form-group mb-5">
+            <input type="email" placeholder="Email Address" required class="w-full px-4 py-3 rounded-custom border border-gray-300 font-poppins transition-all duration-300 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 text-black">
+      </div>
+         
+          <div class="form-group mb-5">
+            <textarea placeholder="Tell us about yourself and your experience" class="w-full px-4 py-3 rounded-custom border border-gray-300 font-poppins transition-all duration-300 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 min-h-[120px] text-black"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Submit Application</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+  <!-- Newsletter Section -->
+<section class="py-20 bg-primary text-light">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <div class="newsletter-box bg-light rounded-custom p-12 grid md:grid-cols-2 gap-12 items-center shadow-lg">
+        <div class="newsletter-text text-dark">
+          <h3 class="text-2xl font-bold mb-4">Stay Connected</h3>
+          <p>Subscribe to our newsletter for event updates, merch drops, and exclusive content.</p>
+        </div>
+        
+    
+        <form class="newsletter-form flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+        <input type="email" placeholder="Your Email Address" required class="flex-1 px-4 py-3 rounded-custom border-0 focus:outline-none focus:ring-2 focus:ring-dark text-dark">
+      <button type="submit" class="btn btn-primary rounded-custom sm:rounded-l-none border-2 border-dark border-l-0">Subscribe</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer id="contact" class="main-footer bg-dark text-light pt-20">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <div class="footer-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-16">
+        <div class="footer-col">
+          <img src="pics/white.png" alt="EnjoymentClan Logo" class="footer-logo h-10 mb-4">
+          <p class="mb-6">creating good times
+and long lasting memories through
+entertainment.</p>
+          <div class="footer-social flex gap-4">
+            <a href="#" class="w-10 h-10 flex items-center justify-center bg-white/10 rounded-full transition-all duration-300 hover:bg-primary hover:-translate-y-1"><i class="fab fa-instagram"></i></a>
+            <a href="#" class="w-10 h-10 flex items-center justify-center bg-white/10 rounded-full transition-all duration-300 hover:bg-primary hover:-translate-y-1"><i class="fab fa-twitter"></i></a>
+            <a href="#" class="w-10 h-10 flex items-center justify-center bg-white/10 rounded-full transition-all duration-300 hover:bg-primary hover:-translate-y-1"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" class="w-10 h-10 flex items-center justify-center bg-white/10 rounded-full transition-all duration-300 hover:bg-primary hover:-translate-y-1"><i class="fab fa-youtube"></i></a>
+            <a href="#" class="w-10 h-10 flex items-center justify-center bg-white/10 rounded-full transition-all duration-300 hover:bg-primary hover:-translate-y-1"><i class="fab fa-tiktok"></i></a>
+          </div>
+        </div>
+        
+        <div class="footer-col">
+          <h4 class="text-lg font-bold mb-6 pb-2 relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-10 after:h-0.5 after:bg-primary">Quick Links</h4>
+          <ul>
+            <li class="mb-3"><a href="index.html" class="hover:text-primary hover:pl-2 transition-all duration-300">Home</a></li>
+            <li class="mb-3"><a href="about.html" class="hover:text-primary hover:pl-2 transition-all duration-300">About Us</a></li>
+            <li class="mb-3"><a href="merchandise.html" class="hover:text-primary hover:pl-2 transition-all duration-300">Merchandise</a></li>
+            <li class="mb-3"><a href="contact.html" class="hover:text-primary hover:pl-2 transition-all duration-300">Contact</a></li>
+            <li class="mb-3"><a href="#" class="hover:text-primary hover:pl-2 transition-all duration-300">Events</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-col">
+          <h4 class="text-lg font-bold mb-6 pb-2 relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-10 after:h-0.5 after:bg-primary">Support</h4>
+          <ul>
+            <li class="mb-3"><a href="#" class="hover:text-primary hover:pl-2 transition-all duration-300">FAQs</a></li>
+            <li class="mb-3"><a href="#" class="hover:text-primary hover:pl-2 transition-all duration-300">Shipping Policy</a></li>
+            <li class="mb-3"><a href="#" class="hover:text-primary hover:pl-2 transition-all duration-300">Returns & Exchanges</a></li>
+            <li class="mb-3"><a href="#" class="hover:text-primary hover:pl-2 transition-all duration-300">Terms of Service</a></li>
+            <li class="mb-3"><a href="#" class="hover:text-primary hover:pl-2 transition-all duration-300">Privacy Policy</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-col">
+          <h4 class="text-lg font-bold mb-6 pb-2 relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-10 after:h-0.5 after:bg-primary">Contact Info</h4>
+          <ul class="contact-info">
+            <li class="mb-4 flex items-center"><i class="fas fa-envelope mr-3 text-primary w-5 text-center"></i> info@enjoymentclan.com</li>
+            <li class="mb-4 flex items-center"><i class="fas fa-phone mr-3 text-primary w-5 text-center"></i> (555) 123-4567</li>
+            <li class="mb-4 flex items-center"><i class="fas fa-map-marker-alt mr-3 text-primary w-5 text-center"></i> Los Angeles, CA</li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="footer-bottom border-t border-white/10 py-5 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <p>&copy; 2025 TheEnjoymentClan. All rights reserved.</p>
+        <div class="payment-methods flex gap-4">
+          <i class="fab fa-cc-visa text-xl text-white/70"></i>
+          <i class="fab fa-cc-mastercard text-xl text-white/70"></i>
+          <i class="fab fa-cc-amex text-xl text-white/70"></i>
+          <i class="fab fa-cc-paypal text-xl text-white/70"></i>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+  // Smooth scrolling for navigation links
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      
+      const targetId = this.getAttribute('href');
+      if (targetId === '#') return;
+      
+      const targetElement = document.querySelector(targetId);
+      if (targetElement) {
+        window.scrollTo({
+          top: targetElement.offsetTop,
+          behavior: 'smooth'
+        });
+      }
+    });
+  });
+</script>
+
+<script>
+  // Responsive nav highlight on scroll
+  const sections = ['home', 'about', 'services', 'events', 'merchandise', 'join'];
+  const navLinks = document.querySelectorAll('.nav-link');
+
+  function setActiveNav() {
+    let index = sections.length - 1;
+    for (let i = 0; i < sections.length; i++) {
+      const section = document.getElementById(sections[i]);
+      if (section && window.scrollY + 100 < section.offsetTop + section.offsetHeight) {
+        index = i;
+        break;
+      }
+    }
+    navLinks.forEach((link, i) => {
+      if (i === index) {
+        link.classList.add('text-primary');
+        link.classList.remove('text-light');
+        link.classList.add('after:w-full');
+      } else {
+        link.classList.remove('text-primary');
+        link.classList.add('text-light');
+        link.classList.remove('after:w-full');
+      }
+    });
+  }
+
+  window.addEventListener('scroll', setActiveNav);
+  window.addEventListener('DOMContentLoaded', setActiveNav);
+
+  // Mobile nav toggle
+  const mobileToggle = document.querySelector('.mobile-menu-toggle');
+  const mainNav = document.querySelector('.main-nav');
+  if (mobileToggle) {
+    mobileToggle.addEventListener('click', () => {
+      mainNav.classList.toggle('hidden');
+      mainNav.classList.toggle('block');
+      mainNav.classList.toggle('bg-dark');
+      mainNav.classList.toggle('absolute');
+      mainNav.classList.toggle('top-full');
+      mainNav.classList.toggle('left-0');
+      mainNav.classList.toggle('w-full');
+      mainNav.classList.toggle('p-5');
+    });
+  }
+</script>
+  
+</body>
+</html>

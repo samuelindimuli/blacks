@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head> 
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Content - EnjoymentClan</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#FF5E14',
+            secondary: '#1A1A1A',
+            accent: '#FF9E00',
+            dark: '#121212',
+            light: '#FFFFFF',
+            gray: '#F5F5F5',
+            text: '#333333',
+            textLight: '#777777',
+          },
+          fontFamily: {
+            poppins: ['Poppins', 'sans-serif'],
+          },
+          boxShadow: {
+            sm: '0 2px 8px rgba(0,0,0,0.1)',
+            md: '0 4px 12px rgba(0,0,0,0.15)',
+            lg: '0 8px 24px rgba(0,0,0,0.2)',
+          },
+          borderRadius: {
+            custom: '8px',
+          },
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer components {
+      .btn {
+        @apply inline-block px-7 py-3 rounded-custom font-semibold uppercase tracking-wider text-sm transition-all duration-300 ease-in-out cursor-pointer text-center border-2 border-transparent;
+      }
+      .btn-primary {
+        @apply bg-primary text-light hover:bg-[#E04E00] hover:-translate-y-1 hover:shadow-md;
+      }
+      .btn-outline {
+        @apply bg-transparent text-primary border-primary hover:bg-primary hover:text-light hover:-translate-y-1 hover:shadow-md;
+      }
+    }
+  </style>
+</head>
+<body class="font-poppins text-text bg-light">
+  <header class="bg-dark text-light py-5">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <div class="flex justify-between items-center">
+        <div class="brand">
+          <a href="tail.html">
+            <img src="pics/white.png" alt="EnjoymentClan Logo" class="h-20">
+          </a>
+        </div>
+        <nav>
+          <a href="tail.html" class="text-light hover:text-primary">Back to Home</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <script src="config.js"></script>
+  <section class="py-20">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <h1 class="text-4xl font-bold text-center mb-8">Content Hub</h1>
+
+      <div id="contentItems" class="grid md:grid-cols-2 gap-8 mb-8"></div>
+
+      <div class="bg-white p-6 rounded-custom shadow-md">
+        <h2 class="text-2xl font-bold mb-4 text-center">Live Streams</h2>
+        <p class="mb-4 text-center">Watch the latest live sessions here. Starting a live broadcast is restricted to admins.</p>
+        <div class="space-y-4">
+          <div class="border border-gray-200 rounded-custom p-4">
+            <h3 class="text-xl font-semibold mb-2">Live DJ Session</h3>
+            <p class="text-sm text-gray-500 mb-4">Tune in to the current live stream.</p>
+            <a href="#" class="btn btn-primary w-full">Stream Live</a>
+          </div>
+          <div class="bg-gray-200 h-32 rounded-custom flex items-center justify-center">
+            <p class="text-gray-500">Live Stream Placeholder</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const STORAGE_KEY = window.EC_CONFIG.storageKey;
+    const ANALYTICS_KEY = window.EC_CONFIG.analyticsKey;
+    const defaultItems = window.EC_CONFIG.defaultItems;
+
+    function getStoredItems() {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (!stored) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultItems));
+        return defaultItems;
+      }
+
+      try {
+        const parsed = JSON.parse(stored);
+        if (!Array.isArray(parsed)) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultItems));
+          return defaultItems;
+        }
+        return parsed;
+      } catch (e) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultItems));
+        return defaultItems;
+      }
+    }
+
+    function incrementAnalytics(type) {
+      const analytics = JSON.parse(localStorage.getItem(ANALYTICS_KEY) || '{"siteVisits":0,"streams":0,"downloads":0,"purchases":0}');
+      analytics[type]++;
+      localStorage.setItem(ANALYTICS_KEY, JSON.stringify(analytics));
+    }
+
+    function renderContentItems() {
+      const items = getStoredItems();
+      const contentItems = document.getElementById('contentItems');
+      if (!contentItems) return;
+      if (!items.length) {
+        contentItems.innerHTML = '<p class="text-gray-500">No content is available yet.</p>';
+        return;
+      }
+
+      contentItems.innerHTML = items.map(item => `
+        <div class="border border-gray-200 rounded-custom p-6 bg-white shadow-sm">
+          <div class="flex justify-between items-start gap-4 mb-4">
+            <span class="text-xs font-semibold uppercase tracking-wider text-primary">${item.type}</span>
+            <span class="text-sm text-gray-500">${item.source}</span>
+          </div>
+          <h3 class="text-xl font-bold mb-3">${item.title}</h3>
+          <p class="text-gray-600 mb-6">${item.description}</p>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <a href="#" class="btn btn-outline w-full sm:w-auto stream-btn" data-title="${item.title}">Stream</a>
+            <a href="#" class="btn btn-primary w-full sm:w-auto download-btn" data-title="${item.title}">Download</a>
+          </div>
+        </div>
+      `).join('');
+
+      // Attach analytics event listeners
+      document.querySelectorAll('.stream-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          incrementAnalytics('streams');
+          alert(`Streaming: ${btn.getAttribute('data-title')}`);
+        });
+      });
+
+      document.querySelectorAll('.download-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          incrementAnalytics('downloads');
+          alert(`Downloading: ${btn.getAttribute('data-title')}`);
+        });
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      incrementAnalytics('siteVisits');
+      renderContentItems();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>EnjoymentClan | Cart</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Fonts and Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#FF5E14',
+            secondary: '#1A1A1A',
+            accent: '#FF9E00',
+            dark: '#121212',
+            light: '#FFFFFF',
+            gray: '#F5F5F5',
+            text: '#333333',
+            textLight: '#777777',
+          },
+          fontFamily: {
+            poppins: ['Poppins', 'sans-serif'],
+          },
+          boxShadow: {
+            sm: '0 2px 8px rgba(0,0,0,0.1)',
+            md: '0 4px 12px rgba(0,0,0,0.15)',
+            lg: '0 8px 24px rgba(0,0,0,0.2)',
+          },
+          borderRadius: {
+            custom: '8px',
+          },
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer components {
+      .btn {
+        @apply inline-block px-7 py-3 rounded-custom font-semibold uppercase tracking-wider text-sm transition-all duration-300 ease-in-out cursor-pointer text-center border-2 border-transparent;
+      }
+      .btn-primary {
+        @apply bg-primary text-light hover:bg-[#E04E00] hover:-translate-y-1 hover:shadow-md;
+      }
+      .btn-outline {
+        @apply bg-transparent text-primary border-primary hover:bg-primary hover:text-light hover:-translate-y-1 hover:shadow-md;
+      }
+      .btn-small {
+        @apply px-4 py-2 text-xs;
+      }
+      .section-title {
+        @apply relative inline-block mb-8 text-4xl font-bold;
+      }
+      .section-title:after {
+        @apply content-[''] absolute -bottom-2 left-0 w-16 h-1 bg-primary;
+      }
+      .section-subtitle {
+        @apply block text-sm uppercase tracking-widest text-primary mb-4 font-semibold;
+      }
+      .cart-table th, .cart-table td { 
+        @apply vertical-align-middle;
+      }
+      .cart-table th { 
+        @apply bg-gray;
+      }
+      .cart-table tr:last-child td { 
+        @apply border-b-0;
+      }
+      .cart-table img { 
+        @apply shadow-sm;
+      }
+      .qty-btn { 
+        @apply transition-colors duration-200;
+      }
+      .qty-btn:hover { 
+        @apply bg-gray-100;
+      }
+      .remove-btn:hover { 
+        @apply text-primary;
+      }
+    }
+  </style>
+</head>
+<body class="font-poppins text-text bg-light min-h-screen">
+
+  <!-- HEADER / TOP NAV -->
+  <header class="fixed top-0 left-0 w-full py-5 bg-dark z-50 shadow-md">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <div class="flex justify-between items-center">
+        <div class="brand">
+          <a href="sample.html">
+            <img src="pics/white.png" alt="EnjoymentClan Logo" class="h-20">
+          </a>
+        </div>
+        <nav class="main-nav hidden md:block">
+          <ul class="flex items-center space-x-8">
+            <li><a href="tail.html#home" class="nav-link text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">HOME</a></li>
+            <li><a href="tail.html#about" class="nav-link text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">ABOUT US</a></li>
+            <li><a href="merchandise.html" class="nav-link text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-0.5 after:bg-primary text-primary">MERCHANDISE</a></li>
+            <li><a href="tail.html#join" class="nav-link text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">CONTACT US</a></li>
+          </ul>
+        </nav>
+        <div class="mobile-menu-toggle md:hidden text-light text-2xl cursor-pointer">
+          <i class="fas fa-bars"></i>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CART HERO SECTION -->
+  <section class="pt-32 pb-10 bg-gradient-to-b from-primary/90 to-light text-dark text-center bg-[url('/images/cart-bg.svg')] bg-cover bg-center">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <h2 class="text-4xl md:text-6xl font-extrabold mb-4 uppercase tracking-wider">My Cart</h2>
+      <p class="text-lg text-textLight">Manage your selected products and proceed to checkout.</p>
+    </div>
+  </section>
+
+  <!-- CART CONTENT -->
+  <section class="pt-16 pb-24 bg-light">
+    <div class="container mx-auto px-5 max-w-6xl grid grid-cols-1 lg:grid-cols-3 gap-10" id="cartSection">
+      <!-- Cart items and summary will be rendered here by JS -->
+    </div>
+  </section>
+
+  <!-- NEWSLETTER SECTION -->
+  <section class="py-20 bg-primary text-light">
+    <div class="container mx-auto px-5 max-w-4xl text-center">
+      <h2 class="text-3xl font-bold mb-4">Stay Updated</h2>
+      <p class="mb-8 text-lg">Subscribe for exclusive merch drops and special offers.</p>
+      <form class="newsletter-form flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+        <input type="email" placeholder="Your Email Address" required class="flex-1 px-4 py-3 rounded-custom border-0 focus:outline-none focus:ring-2 focus:ring-dark text-dark">
+        <button type="submit" class="btn bg-dark text-light hover:bg-secondary">Subscribe</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="bg-dark text-light pt-16 pb-8">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <div class="footer-content flex flex-col md:flex-row justify-between items-center mb-8">
+        <div class="footer-logo mb-6 md:mb-0">
+            <img src="pics/white.png" alt="EnjoymentClan Logo" class="h-32">
+        </div>
+        <div class="social-links flex gap-6">
+          <a href="#" aria-label="Facebook" class="text-2xl hover:text-primary transition-colors duration-300"><i class="fab fa-facebook"></i></a>
+          <a href="#" aria-label="Instagram" class="text-2xl hover:text-primary transition-colors duration-300"><i class="fab fa-instagram"></i></a>
+          <a href="#" aria-label="Twitter" class="text-2xl hover:text-primary transition-colors duration-300"><i class="fab fa-twitter"></i></a>
+        </div>
+      </div>
+      <p class="copyright text-center text-textLight text-sm">&copy; 2025 EnjoymentClan. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+function getCart() {
+  return JSON.parse(localStorage.getItem('enjoymentCart') || '[]');
+}
+function setCart(cart) {
+  localStorage.setItem('enjoymentCart', JSON.stringify(cart));
+}
+function renderCart() {
+  const cart = getCart();
+  const cartSection = document.getElementById('cartSection');
+  let shipping = 150;
+  
+  if (!cart.length) {
+    cartSection.innerHTML = `
+      <div class="lg:col-span-3 bg-white rounded-2xl shadow-md p-12 text-center">
+        <i class="fas fa-shopping-cart text-5xl text-primary mb-4"></i>
+        <h3 class="text-2xl font-bold text-dark mb-2">Your cart is empty</h3>
+        <p class="text-textLight text-lg mb-6">Looks like you haven't added any items yet.</p>
+        <a href="merchandise.html" class="btn btn-primary px-8 py-3">Browse Merchandise</a>
+      </div>
+    `;
+    return;
+  }
+
+  let subtotal = 0;
+  let itemsHtml = cart.map((item, idx) => {
+    const itemTotal = item.qty * parseInt(item.price);
+    subtotal += itemTotal;
+    return `
+      <div class="bg-white rounded-xl p-6 flex flex-col md:flex-row gap-6 border border-gray-100 shadow-lg hover:shadow-xl transition-all duration-300">
+        <div class="flex-shrink-0 flex items-center justify-center">
+          <img src="${item.img}" alt="${item.name}" class="w-40 h-40 object-cover rounded-lg shadow-sm">
+        </div>
+        <div class="flex-1 flex flex-col">
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <h3 class="font-bold text-xl text-dark mb-2">${item.name}</h3>
+              <p class="text-primary font-bold text-lg">KSH ${parseInt(item.price).toLocaleString()}</p>
+            </div>
+            <button class="text-gray-400 hover:text-red-500 transition-colors" onclick="removeItem(${idx})">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+          <div class="mt-auto flex flex-wrap justify-between items-end gap-4">
+            <div class="inline-flex items-center gap-1">
+              <button class="w-8 h-8 border border-gray-300 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:border-gray-400 transition-colors" onclick="updateQty(${idx}, -1)">−</button>
+              <span class="w-12 text-center font-medium text-gray-700">${item.qty}</span>
+              <button class="w-8 h-8 border border-gray-300 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:border-gray-400 transition-colors" onclick="updateQty(${idx}, 1)">+</button>
+            </div>
+            <div class="font-bold text-lg text-dark">Total: KSH ${itemTotal.toLocaleString()}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  let summaryHtml = `
+    <div class="bg-white rounded-xl shadow-md p-6 sticky top-28">
+      <h3 class="text-xl font-bold mb-6">Order Summary</h3>
+      <div class="space-y-4">
+        <div class="flex justify-between font-semibold">
+          <span class="text-gray-700">Subtotal</span>
+          <span class="text-gray-900">KSH ${subtotal.toLocaleString()}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-500">Delivery fees not included yet.</span>
+        </div>
+        <div class="border-t pt-4 mt-4">
+          <div class="flex justify-between font-bold">
+            <span>Total</span>
+            <span class="text-primary">KSH ${subtotal.toLocaleString()}</span>
+          </div>
+        </div>
+        <button onclick="checkout()" class="w-full bg-primary text-white rounded-lg py-3 font-semibold mt-6 hover:bg-opacity-90 transition-all">
+          Check out
+        </button>
+      </div>
+    </div>
+  `;
+
+  let cartContent = `
+    <div class="lg:col-span-2">
+      <!-- Header Row with Product, Quantity, Total -->
+      <div class="grid grid-cols-4 gap-6 mb-4 px-6 py-3 bg-gray-50/50 rounded-lg">
+        <div class="col-span-2 font-medium text-lg text-gray-400">Product</div>
+        <div class="text-center font-medium text-lg text-gray-400">Quantity</div>
+        <div class="text-right font-medium text-lg text-gray-400">Total</div>
+      </div>
+      <div class="space-y-4">
+        ${itemsHtml}
+      </div>
+    </div>
+
+    <!-- Order Summary Column -->
+    <div class="space-y-6">
+      <!-- Continue Shopping moved to align right -->
+      <div class="bg-gray-50 rounded-lg px-6 py-3 flex justify-end">
+        <a href="merchandise.html" class="text-primary hover:text-primary/80 font-medium inline-flex items-center">
+          <i class="fas fa-arrow-left mr-2"></i><span class="underline decoration-1 underline-offset-2">Continue Shopping</span>
+        </a>
+      </div>
+      ${summaryHtml}
+    </div>
+  `;
+
+  cartSection.innerHTML = cart.length ? cartContent : `
+    <div class="lg:col-span-3 bg-white rounded-2xl shadow-md p-12 text-center">
+      <i class="fas fa-shopping-cart text-5xl text-primary mb-4"></i>
+      <h3 class="text-2xl font-bold text-dark mb-2">Your cart is empty</h3>
+      <p class="text-textLight text-lg mb-6">Looks like you haven't added any items yet.</p>
+      <a href="merchandise.html" class="btn btn-primary px-8 py-3">Browse Merchandise</a>
+    </div>
+  `;
+}
+function updateQty(idx, delta) {
+  let cart = getCart();
+  cart[idx].qty += delta;
+  if (cart[idx].qty < 1) cart[idx].qty = 1;
+  setCart(cart);
+  renderCart();
+}
+function removeItem(idx) {
+  let cart = getCart();
+  cart.splice(idx, 1);
+  setCart(cart);
+  renderCart();
+}
+function checkout() {
+  alert('Proceeding to checkout!');
+}
+renderCart();
+  </script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head> 
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event DJing - EnjoymentClan</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#FF5E14',
+            secondary: '#1A1A1A',
+            accent: '#FF9E00',
+            dark: '#121212',
+            light: '#FFFFFF',
+            gray: '#F5F5F5',
+            text: '#333333',
+            textLight: '#777777',
+          },
+          fontFamily: {
+            poppins: ['Poppins', 'sans-serif'],
+          },
+          boxShadow: {
+            sm: '0 2px 8px rgba(0,0,0,0.1)',
+            md: '0 4px 12px rgba(0,0,0,0.15)',
+            lg: '0 8px 24px rgba(0,0,0,0.2)',
+          },
+          borderRadius: {
+            custom: '8px',
+          },
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer components {
+      .btn {
+        @apply inline-block px-7 py-3 rounded-custom font-semibold uppercase tracking-wider text-sm transition-all duration-300 ease-in-out cursor-pointer text-center border-2 border-transparent;
+      }
+      .btn-primary {
+        @apply bg-primary text-light hover:bg-[#E04E00] hover:-translate-y-1 hover:shadow-md;
+      }
+      .btn-outline {
+        @apply bg-transparent text-primary border-primary hover:bg-primary hover:text-light hover:-translate-y-1 hover:shadow-md;
+      }
+    }
+  </style>
+</head>
+<body class="font-poppins text-text bg-light">
+  <header class="bg-dark text-light py-5">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <div class="flex justify-between items-center">
+        <div class="brand">
+          <a href="tail.html">
+            <img src="pics/white.png" alt="EnjoymentClan Logo" class="h-20">
+          </a>
+        </div>
+        <nav>
+          <a href="tail.html" class="text-light hover:text-primary">Back to Home</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <section class="py-20">
+    <div class="container mx-auto px-5 max-w-4xl">
+      <h1 class="text-4xl font-bold text-center mb-8">Event DJing</h1>
+      <p class="text-lg mb-6">Professional DJ services for weddings, corporate events, club events, and private parties. Our experienced DJs bring the energy and expertise to make your event unforgettable.</p>
+      <p class="mb-6">We offer:</p>
+      <ul class="list-disc list-inside mb-6">
+        <li>Custom playlist curation based on your preferences</li>
+        <li>State-of-the-art sound equipment</li>
+        <li>Lighting and visual effects</li>
+        <li>MC services and crowd engagement</li>
+        <li>Backup equipment for reliability</li>
+      </ul>
+      <a href="tail.html#services" class="btn btn-primary">Back to Services</a>
+    </div>
+  </section>
+</body>
+</html>

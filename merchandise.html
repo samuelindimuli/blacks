@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Merchandise - EnjoymentClan</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#FF5E14',
+            secondary: '#1A1A1A',
+            accent: '#FF9E00',
+            dark: '#121212',
+            light: '#FFFFFF',
+            gray: '#F5F5F5',
+            text: '#333333',
+            textLight: '#777777',
+          },
+          fontFamily: {
+            poppins: ['Poppins', 'sans-serif'],
+          },
+          boxShadow: {
+            sm: '0 2px 8px rgba(0,0,0,0.1)',
+            md: '0 4px 12px rgba(0,0,0,0.15)',
+            lg: '0 8px 24px rgba(0,0,0,0.2)',
+          },
+          borderRadius: {
+            custom: '8px',
+          },
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer components {
+      .btn {
+        @apply inline-block px-7 py-3 rounded-custom font-semibold uppercase tracking-wider text-sm transition-all duration-300 ease-in-out cursor-pointer text-center border-2 border-transparent;
+      }
+      .btn-primary {
+        @apply bg-primary text-light hover:bg-[#E04E00] hover:-translate-y-1 hover:shadow-md;
+      }
+      .btn-outline {
+        @apply bg-transparent text-primary border-primary hover:bg-primary hover:text-light hover:-translate-y-1 hover:shadow-md;
+      }
+      .btn-small {
+        @apply px-4 py-2 text-xs;
+      }
+      .section-title {
+        @apply relative inline-block mb-8 text-4xl font-bold;
+      }
+      .section-title:after {
+        @apply content-[''] absolute -bottom-2 left-0 w-16 h-1 bg-primary;
+      }
+      .section-subtitle {
+        @apply block text-sm uppercase tracking-widest text-primary mb-4 font-semibold;
+      }
+    }
+  </style>
+</head>
+<body class="font-poppins text-text">
+  
+  <!-- HEADER -->
+  <header class="fixed top-0 left-0 w-full py-5 bg-dark z-50 shadow-md">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <div class="flex justify-between items-center">
+        <div class="brand">
+          <a href="sample.html">
+            <img src="pics/white.png" alt="EnjoymentClan Logo" class="h-20">
+          </a>
+        </div>
+
+        <nav class="main-nav hidden md:block">
+          <ul class="flex items-center space-x-8">
+            <li><a href="tail.html" class="text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">HOME</a></li>
+            <li><a href="about.html" class="text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">ABOUT US</a></li>
+            <li><a href="merchandise.html" class="text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-0.5 after:bg-primary text-primary">MERCHANDISE</a></li>
+            <li><a href="contact.html" class="text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">CONTACT US</a></li>
+          </ul>
+        </nav>
+
+        <div class="mobile-menu-toggle md:hidden text-light text-2xl cursor-pointer">
+          <i class="fas fa-bars"></i>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Cart Modal (hidden by default) -->
+  <div id="cartModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-custom shadow-lg w-full max-w-md p-6 relative">
+      <button id="closeCart" class="absolute top-3 right-3 text-dark text-xl hover:text-primary"><i class="fas fa-times"></i></button>
+      <h3 class="text-2xl font-bold mb-4">Your Cart</h3>
+      <ul id="cartItems" class="mb-4">
+        <li class="text-textLight">Your cart is empty.</li>
+      </ul>
+      <button class="btn btn-primary w-full">Checkout</button>
+    </div>
+  </div>
+
+  <!-- Add this notification div after the header -->
+  <div id="notification" class="fixed top-24 right-4 bg-white rounded-lg shadow-lg p-4 transform translate-x-full transition-transform duration-300 z-50 w-96">
+    <div class="flex items-center gap-3">
+      <i class="fas fa-check-circle text-primary text-xl"></i>
+      <p class="text-dark font-medium whitespace-nowrap overflow-hidden text-ellipsis">Item added to cart!</p>
+    </div>
+  </div>
+
+  <!-- MERCH HERO SECTION -->
+  <section class="merch-hero pt-32 pb-10 bg-gradient-to-b from-primary/90 to-light text-dark text-center">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <h1 class="text-4xl md:text-6xl font-bold mb-4 uppercase tracking-wider">EnjoymentClan Merchandise</h1>
+      <h2 class="text-xl md:text-2xl font-light tracking-wider mb-2">Rep the Clan in Style</h2>
+      <!-- Removed the two buttons and reduced bottom margin -->
+    </div>
+  </section>
+
+  <!-- FEATURED PRODUCTS SECTION -->
+  <section class="py-12 bg-light">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <h2 class="section-title text-center md:text-left mb-4 md:mb-0">Featured Products</h2>
+        <div class="flex items-center gap-4 justify-center md:justify-end">
+          <!-- Search Bar -->
+          <form id="searchForm" class="flex items-center bg-light rounded-custom px-3 py-1 shadow-sm border border-gray-200">
+            <input type="text" id="searchInput" placeholder="Search merch..." class="bg-light text-dark outline-none border-0 px-2 py-1 font-poppins" />
+            <button type="submit" class="text-primary text-xl px-2 hover:text-dark"><i class="fas fa-search"></i></button>
+          </form>
+          <!-- Cart Button -->
+          <button id="cartBtn" class="relative flex items-center gap-2 text-dark text-2xl hover:text-primary transition-colors duration-300">
+            <span class="relative">
+              <i class="fas fa-shopping-cart"></i>
+              <span id="cartCount" class="absolute -top-2 -right-2 bg-primary text-light text-xs rounded-full px-2 py-0.5 font-bold">0</span>
+            </span>
+            <span class="text-base font-semibold">Cart</span>
+          </button>
+        </div>
+      </div>
+      <div class="product-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <!-- Products will be dynamically loaded here -->
+      </div>
+    </div>
+  </section>
+
+  <!-- NEWSLETTER SECTION -->
+  <section class="py-20 bg-primary text-light">
+    <div class="container mx-auto px-5 max-w-4xl text-center">
+      <h2 class="text-3xl font-bold mb-4">Get Exclusive Offers</h2>
+      <p class="mb-8 text-lg">Subscribe to our newsletter for early access to new merch drops and special discounts.</p>
+      <form class="newsletter-form flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+        <input type="email" placeholder="Your Email Address" required class="flex-1 px-4 py-3 rounded-custom border-0 focus:outline-none focus:ring-2 focus:ring-dark text-dark">
+        <button type="submit" class="btn bg-dark text-light hover:bg-secondary">Subscribe</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="bg-dark text-light pt-16 pb-8">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <div class="footer-content flex flex-col md:flex-row justify-between items-center mb-8">
+        <div class="footer-logo mb-6 md:mb-0">
+            <img src="pics/white.png" alt="EnjoymentClan Logo" class="h-32">
+        </div>
+        <div class="social-links flex gap-6">
+          <a href="#" aria-label="Facebook" class="text-2xl hover:text-primary transition-colors duration-300"><i class="fab fa-facebook"></i></a>
+          <a href="#" aria-label="Instagram" class="text-2xl hover:text-primary transition-colors duration-300"><i class="fab fa-instagram"></i></a>
+          <a href="#" aria-label="Twitter" class="text-2xl hover:text-primary transition-colors duration-300"><i class="fab fa-twitter"></i></a>
+        </div>
+      </div>
+      <p class="copyright text-center text-textLight text-sm">&copy; 2025 EnjoymentClan. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="config.js"></script>
+  <script>
+    const MERCH_KEY = window.EC_CONFIG.merchKey;
+    const PURCHASES_KEY = window.EC_CONFIG.purchasesKey;
+    const ANALYTICS_KEY = window.EC_CONFIG.analyticsKey;
+    const defaultMerch = window.EC_CONFIG.defaultMerch;
+
+    function getStoredMerch() {
+      const stored = localStorage.getItem(MERCH_KEY);
+      if (!stored) {
+        localStorage.setItem(MERCH_KEY, JSON.stringify(defaultMerch));
+        return defaultMerch;
+      }
+      try {
+        const parsed = JSON.parse(stored);
+        return Array.isArray(parsed) ? parsed : defaultMerch;
+      } catch (e) {
+        localStorage.setItem(MERCH_KEY, JSON.stringify(defaultMerch));
+        return defaultMerch;
+      }
+    }
+
+    function incrementAnalytics(type) {
+      const analytics = JSON.parse(localStorage.getItem(ANALYTICS_KEY) || '{"siteVisits":0,"streams":0,"downloads":0,"purchases":0}');
+      analytics[type]++;
+      localStorage.setItem(ANALYTICS_KEY, JSON.stringify(analytics));
+    }
+
+    function logPurchase(item, type, price) {
+      const purchases = JSON.parse(localStorage.getItem(PURCHASES_KEY) || '[]');
+      purchases.push({ item, type, price, date: new Date().toISOString() });
+      localStorage.setItem(PURCHASES_KEY, JSON.stringify(purchases));
+      incrementAnalytics('purchases');
+    }
+
+    function renderMerchandise() {
+      const merch = getStoredMerch();
+      const productGrid = document.querySelector('.product-grid');
+      if (!productGrid || !merch.length) return;
+
+      productGrid.innerHTML = merch.map((item, index) => `
+        <div class="product bg-white rounded-custom overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-3 hover:shadow-md relative">
+          <div class="product-image relative h-80 overflow-hidden">
+            <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover transition-all duration-300 hover:scale-105">
+            ${index < 2 ? `<span class="product-tag absolute top-4 right-4 bg-primary text-light px-4 py-1 rounded-full text-xs font-semibold z-10">${index === 0 ? 'Best Seller' : 'New'}</span>` : ''}
+          </div>
+          <div class="product-info p-6">
+            <h3 class="text-xl font-bold mb-2">${item.name}</h3>
+            <p class="price text-primary font-bold text-lg mb-3">KSH ${item.price}</p>
+            <p class="description text-textLight mb-5">${item.description}</p>
+            <button class="btn btn-primary w-full add-to-cart-btn" data-name="${item.name}" data-price="${item.price}" data-image="${item.image}">Add to Cart</button>
+          </div>
+        </div>
+      `).join('');
+
+      // Re-attach cart event listeners
+      attachCartListeners();
+    }
+
+    function attachCartListeners() {
+      document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const name = this.getAttribute('data-name');
+          const price = parseInt(this.getAttribute('data-price'));
+          const img = this.getAttribute('data-image');
+
+          let cart = getCart();
+          let found = cart.find(item => item.name === name);
+
+          if (!found) {
+            cart.push({ name, price, img, qty: 1 });
+            setCart(cart);
+            updateCartCount();
+            showNotification();
+            logPurchase(name, 'Merchandise', price);
+            renderQuantityControls(this, name, 1);
+          }
+        });
+      });
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      incrementAnalytics('siteVisits');
+      renderMerchandise();
+      updateCartCount();
+    });
+    // Search logic (basic, just for demo)
+    document.getElementById('searchForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const query = document.getElementById('searchInput').value.trim().toLowerCase();
+      if (!query) return;
+      // Scroll to the first product that matches the search
+      const products = document.querySelectorAll('.product-info h3');
+      let found = false;
+      products.forEach(product => {
+        if (product.textContent.toLowerCase().includes(query) && !found) {
+          product.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          product.parentElement.parentElement.classList.add('ring-4', 'ring-primary');
+          setTimeout(() => product.parentElement.parentElement.classList.remove('ring-4', 'ring-primary'), 1500);
+          found = true;
+        }
+      });
+      if (!found) alert('No matching product found.');
+    });
+
+    // Cart logic using localStorage
+    function getCart() {
+      return JSON.parse(localStorage.getItem('enjoymentCart') || '[]');
+    }
+    function setCart(cart) {
+      localStorage.setItem('enjoymentCart', JSON.stringify(cart));
+    }
+    function updateCartCount() {
+      const cart = getCart();
+      document.getElementById('cartCount').textContent = cart.reduce((sum, item) => sum + item.qty, 0);
+    }
+
+    // Helper to render quantity controls
+    function renderQuantityControls(btn, name, qty) {
+      btn.innerHTML = `
+        <div class="flex items-center justify-between w-full px-2">
+          <button class="quantity-btn" data-action="decrease" data-name="${name}">-</button>
+          <span class="quantity">${qty}</span>
+          <button class="quantity-btn" data-action="increase" data-name="${name}">+</button>
+          <button class="delete-btn" data-action="delete" data-name="${name}">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      `;
+      btn.classList.remove('hover:bg-[#E04E00]', 'hover:-translate-y-1');
+      btn.querySelectorAll('.quantity-btn, .delete-btn').forEach(qtyBtn => {
+        qtyBtn.classList.add('text-light', 'hover:text-light/80', 'font-bold', 'text-xl');
+      });
+    }
+
+    // Add to Cart buttons
+    document.querySelectorAll('.product').forEach(productEl => {
+      const btn = productEl.querySelector('.btn-primary');
+      const name = productEl.querySelector('h3').textContent.trim();
+
+      // On page load, if item is in cart, show quantity controls
+      let cart = getCart();
+      let found = cart.find(item => item.name === name);
+      if (found) {
+        renderQuantityControls(btn, name, found.qty);
+      }
+
+      btn.addEventListener('click', function(e) {
+        // Prevent double handling for quantity/delete buttons
+        if (e.target.closest('.quantity-btn') || e.target.closest('.delete-btn')) return;
+
+        const price = productEl.querySelector('.price').textContent.replace(/[^\d]/g, '');
+        const img = productEl.querySelector('img').src;
+        let cart = getCart();
+        let found = cart.find(item => item.name === name);
+
+        if (!found) {
+          cart.push({ name, price, img, qty: 1 });
+          setCart(cart);
+          updateCartCount();
+          showNotification();
+          renderQuantityControls(btn, name, 1);
+        }
+      });
+    });
+
+    // Notification
+    function showNotification(message = "Item added to cart!") {
+      const notification = document.getElementById('notification');
+      notification.querySelector('p').textContent = message;
+      notification.classList.remove('translate-x-full');
+      setTimeout(() => {
+        notification.classList.add('translate-x-full');
+      }, 2000);
+    }
+
+    // Handle quantity and delete actions (event delegation)
+    document.addEventListener('click', function(e) {
+      const qtyBtn = e.target.closest('.quantity-btn');
+      const delBtn = e.target.closest('.delete-btn');
+      if (qtyBtn) {
+        const name = qtyBtn.getAttribute('data-name');
+        const action = qtyBtn.getAttribute('data-action');
+        let cart = getCart();
+        let item = cart.find(i => i.name === name);
+        if (!item) return;
+        if (action === 'increase') {
+          item.qty += 1;
+        } else if (action === 'decrease') {
+          item.qty = Math.max(1, item.qty - 1);
+        }
+        setCart(cart);
+        updateCartCount();
+        // Update the number in the button
+        const btn = findProductButtonByName(name);
+        if (btn) renderQuantityControls(btn, name, item.qty);
+      }
+      if (delBtn) {
+        const name = delBtn.getAttribute('data-name');
+        let cart = getCart();
+        cart = cart.filter(i => i.name !== name);
+        setCart(cart);
+        updateCartCount();
+        // Revert button to "Add to Cart"
+        const btn = findProductButtonByName(name);
+        if (btn) btn.textContent = 'Add to Cart';
+        showNotification("Item removed from cart!");
+      }
+    });
+
+    // Helper to find the button for a product by name
+    function findProductButtonByName(name) {
+      const products = document.querySelectorAll('.product');
+      for (let product of products) {
+        const h3 = product.querySelector('h3');
+        if (h3 && h3.textContent.trim() === name) {
+          return product.querySelector('.btn-primary');
+        }
+      }
+      return null;
+    }
+
+    // Cart icon click
+    document.getElementById('cartBtn').addEventListener('click', () => {
+      window.location.href = 'cart.html';
+    });
+
+    // Update count on load
+    updateCartCount();
+  </script>
+</body>
+</html>

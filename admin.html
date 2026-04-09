@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - EnjoymentClan</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#FF5E14',
+            secondary: '#1A1A1A',
+            accent: '#FF9E00',
+            dark: '#121212',
+            light: '#FFFFFF',
+            gray: '#F5F5F5',
+            text: '#333333',
+            textLight: '#777777',
+          },
+          fontFamily: {
+            poppins: ['Poppins', 'sans-serif'],
+          },
+          borderRadius: {
+            custom: '8px',
+          },
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer components {
+      .btn {
+        @apply inline-block px-7 py-3 rounded-custom font-semibold uppercase tracking-wider text-sm transition-all duration-300 ease-in-out cursor-pointer text-center border-2 border-transparent;
+      }
+      .btn-primary {
+        @apply bg-primary text-light hover:bg-[#E04E00] hover:-translate-y-1 hover:shadow-md;
+      }
+      .btn-outline {
+        @apply bg-transparent text-primary border-primary hover:bg-primary hover:text-light hover:-translate-y-1 hover:shadow-md;
+      }
+      .section-title {
+        @apply relative inline-block mb-8 text-4xl font-bold;
+      }
+      .section-title:after {
+        @apply content-[''] absolute -bottom-2 left-0 w-16 h-1 bg-primary;
+      }
+    }
+  </style>
+</head>
+<body class="font-poppins text-text bg-light">
+  <header class="bg-dark text-light py-5">
+    <div class="container mx-auto px-5 max-w-6xl flex justify-between items-center">
+      <div>
+        <a href="tail.html" class="inline-flex items-center gap-3 text-light hover:text-primary">
+          <img src="pics/white.png" alt="EnjoymentClan Logo" class="h-16"> Admin Dashboard
+        </a>
+      </div>
+      <nav>
+        <a href="content.html" class="btn btn-outline">View Content</a>
+      </nav>
+    </div>
+  </header>
+
+  <script src="config.js"></script>
+  <main class="py-20">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <div class="text-center mb-12">
+        <span class="section-subtitle">Admin Access</span>
+        <h1 class="section-title">Content Upload Manager</h1>
+        <p class="text-gray-600 max-w-2xl mx-auto">Use the token in the URL to access this page. Uploaded items will appear in the public content hub.</p>
+      </div>
+
+      <div id="unauthorizedMessage" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-6 rounded-custom mb-8 hidden">
+        <h2 class="font-semibold text-xl mb-2">Unauthorized</h2>
+        <p>The admin token is missing or invalid. Access this page using <code>admin.html?token=enjoyment-admin-token</code>.</p>
+      </div>
+
+      <div id="adminTools" class="space-y-10 hidden">
+        <!-- Tab Navigation -->
+        <div class="flex flex-wrap gap-2 mb-8">
+          <button id="tabContent" class="btn btn-primary tab-btn active" data-tab="content">Content</button>
+          <button id="tabEvents" class="btn btn-outline tab-btn" data-tab="events">Events</button>
+          <button id="tabMerch" class="btn btn-outline tab-btn" data-tab="merch">Merchandise</button>
+          <button id="tabAnalytics" class="btn btn-outline tab-btn" data-tab="analytics">Analytics</button>
+        </div>
+
+        <!-- Content Tab -->
+        <div id="contentTab" class="tab-content">
+          <section class="bg-white rounded-custom shadow-md p-8">
+            <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
+              <div>
+                <h2 class="text-2xl font-bold">Upload New Content</h2>
+                <p class="text-gray-500">Add audio or video items that will appear on the public content page.</p>
+              </div>
+              <button id="clearUploads" class="btn btn-outline self-start">Clear All Uploads</button>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+              <div class="bg-gray-50 p-6 rounded-custom border border-gray-200">
+                <h3 class="text-xl font-semibold mb-4">Audio Upload</h3>
+                <form id="audioUploadForm" class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Audio File Name</label>
+                    <input type="text" name="audioFileName" required class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Title</label>
+                    <input type="text" name="audioTitle" required class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Description</label>
+                    <textarea name="audioDescription" rows="3" required class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-primary w-full">Save Audio</button>
+                </form>
+              </div>
+
+              <div class="bg-gray-50 p-6 rounded-custom border border-gray-200">
+                <h3 class="text-xl font-semibold mb-4">Video Upload</h3>
+                <form id="videoUploadForm" class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Video File Name</label>
+                    <input type="text" name="videoFileName" required class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Title</label>
+                    <input type="text" name="videoTitle" required class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Description</label>
+                    <textarea name="videoDescription" rows="3" required class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-primary w-full">Save Video</button>
+                </form>
+              </div>
+            </div>
+          </section>
+
+          <section class="bg-white rounded-custom shadow-md p-8">
+            <h2 class="text-2xl font-bold mb-6">Current Content Uploads</h2>
+            <div id="uploadList" class="grid gap-4"></div>
+          </section>
+        </div>
+
+        <!-- Events Tab -->
+        <div id="eventsTab" class="tab-content hidden">
+          <section class="bg-white rounded-custom shadow-md p-8">
+            <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
+              <div>
+                <h2 class="text-2xl font-bold">Add New Event</h2>
+                <p class="text-gray-500">Create events with ticket packages for the ticketing page.</p>
+              </div>
+              <button id="clearEvents" class="btn btn-outline self-start">Clear All Events</button>
+            </div>
+
+            <form id="eventForm" class="space-y-6">
+              <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label class="block text-sm font-medium mb-2">Event Title</label>
+                  <input type="text" name="eventTitle" required class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-2">Date</label>
+                  <input type="date" name="eventDate" required class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-2">Location</label>
+                <input type="text" name="eventLocation" required class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-2">Description</label>
+                <textarea name="eventDescription" rows="3" required class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"></textarea>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium mb-4">Ticket Packages</label>
+                <div id="ticketPackages" class="space-y-4">
+                  <div class="ticket-package grid md:grid-cols-3 gap-4">
+                    <input type="text" placeholder="Type (e.g., General)" name="ticketType" required class="px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+                    <input type="number" placeholder="Price (KSH)" name="ticketPrice" required class="px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+                    <input type="number" placeholder="Available" name="ticketAvailable" required class="px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+                  </div>
+                </div>
+                <button type="button" id="addTicketPackage" class="btn btn-outline mt-4">Add Another Ticket Package</button>
+              </div>
+
+              <button type="submit" class="btn btn-primary w-full">Create Event</button>
+            </form>
+          </section>
+
+          <section class="bg-white rounded-custom shadow-md p-8">
+            <h2 class="text-2xl font-bold mb-6">Current Events</h2>
+            <div id="eventsList" class="grid gap-4"></div>
+          </section>
+        </div>
+
+        <!-- Merchandise Tab -->
+        <div id="merchTab" class="tab-content hidden">
+          <section class="bg-white rounded-custom shadow-md p-8">
+            <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
+              <div>
+                <h2 class="text-2xl font-bold">Add New Merchandise</h2>
+                <p class="text-gray-500">Add merchandise items for the shop page.</p>
+              </div>
+              <button id="clearMerch" class="btn btn-outline self-start">Clear All Merch</button>
+            </div>
+
+            <form id="merchForm" class="space-y-6">
+              <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label class="block text-sm font-medium mb-2">Item Name</label>
+                  <input type="text" name="merchName" required class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-2">Price (KSH)</label>
+                  <input type="number" name="merchPrice" required class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-2">Image Path</label>
+                <input type="text" name="merchImage" placeholder="e.g., pics/tshirt1.png" required class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-2">Category</label>
+                <input type="text" name="merchCategory" placeholder="e.g., Apparel" required class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-2">Description</label>
+                <textarea name="merchDescription" rows="3" required class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary w-full">Add Merchandise</button>
+            </form>
+          </section>
+
+          <section class="bg-white rounded-custom shadow-md p-8">
+            <h2 class="text-2xl font-bold mb-6">Current Merchandise</h2>
+            <div id="merchList" class="grid gap-4"></div>
+          </section>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div id="analyticsTab" class="tab-content hidden">
+          <section class="bg-white rounded-custom shadow-md p-8">
+            <h2 class="text-2xl font-bold mb-6">Site Analytics</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div class="bg-gray-50 p-6 rounded-custom border border-gray-200 text-center">
+                <div class="text-3xl font-bold text-primary mb-2" id="siteVisits">0</div>
+                <div class="text-sm text-gray-600">Site Visits</div>
+              </div>
+              <div class="bg-gray-50 p-6 rounded-custom border border-gray-200 text-center">
+                <div class="text-3xl font-bold text-primary mb-2" id="totalStreams">0</div>
+                <div class="text-sm text-gray-600">Total Streams</div>
+              </div>
+              <div class="bg-gray-50 p-6 rounded-custom border border-gray-200 text-center">
+                <div class="text-3xl font-bold text-primary mb-2" id="totalDownloads">0</div>
+                <div class="text-sm text-gray-600">Total Downloads</div>
+              </div>
+              <div class="bg-gray-50 p-6 rounded-custom border border-gray-200 text-center">
+                <div class="text-3xl font-bold text-primary mb-2" id="totalPurchases">0</div>
+                <div class="text-sm text-gray-600">Total Purchases</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="bg-white rounded-custom shadow-md p-8">
+            <h2 class="text-2xl font-bold mb-6">Recent Purchases</h2>
+            <div id="purchasesList" class="space-y-4"></div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const ADMIN_TOKEN = window.EC_CONFIG.adminToken;
+    const STORAGE_KEY = window.EC_CONFIG.storageKey;
+    const EVENTS_KEY = window.EC_CONFIG.eventsKey;
+    const MERCH_KEY = window.EC_CONFIG.merchKey;
+    const PURCHASES_KEY = window.EC_CONFIG.purchasesKey;
+    const ANALYTICS_KEY = window.EC_CONFIG.analyticsKey;
+    const urlToken = new URLSearchParams(window.location.search).get('token');
+    const adminTools = document.getElementById('adminTools');
+    const unauthorizedMessage = document.getElementById('unauthorizedMessage');
+    const unauthorizedCode = document.querySelector('#unauthorizedMessage code');
+
+    // Content
+    const uploadList = document.getElementById('uploadList');
+    const audioUploadForm = document.getElementById('audioUploadForm');
+    const videoUploadForm = document.getElementById('videoUploadForm');
+    const clearUploadsButton = document.getElementById('clearUploads');
+
+    // Events
+    const eventForm = document.getElementById('eventForm');
+    const eventsList = document.getElementById('eventsList');
+    const clearEventsButton = document.getElementById('clearEvents');
+    const addTicketPackageButton = document.getElementById('addTicketPackage');
+    const ticketPackages = document.getElementById('ticketPackages');
+
+    // Merchandise
+    const merchForm = document.getElementById('merchForm');
+    const merchList = document.getElementById('merchList');
+    const clearMerchButton = document.getElementById('clearMerch');
+
+    // Analytics
+    const siteVisitsEl = document.getElementById('siteVisits');
+    const totalStreamsEl = document.getElementById('totalStreams');
+    const totalDownloadsEl = document.getElementById('totalDownloads');
+    const totalPurchasesEl = document.getElementById('totalPurchases');
+    const purchasesList = document.getElementById('purchasesList');
+
+    const defaultItems = window.EC_CONFIG.defaultItems;
+    const defaultEvents = window.EC_CONFIG.defaultEvents;
+    const defaultMerch = window.EC_CONFIG.defaultMerch;
+
+    // Tab switching
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const tab = button.dataset.tab;
+        tabButtons.forEach(btn => {
+          btn.classList.remove('btn-primary', 'active');
+          btn.classList.add('btn-outline');
+        });
+        button.classList.remove('btn-outline');
+        button.classList.add('btn-primary', 'active');
+
+        tabContents.forEach(content => {
+          content.classList.add('hidden');
+        });
+        document.getElementById(tab + 'Tab').classList.remove('hidden');
+      });
+    });
+
+    // Utility functions
+    function getStoredData(key, defaultData) {
+      const stored = localStorage.getItem(key);
+      if (!stored) {
+        localStorage.setItem(key, JSON.stringify(defaultData));
+        return defaultData;
+      }
+      try {
+        const parsed = JSON.parse(stored);
+        return Array.isArray(parsed) ? parsed : defaultData;
+      } catch (e) {
+        localStorage.setItem(key, JSON.stringify(defaultData));
+        return defaultData;
+      }
+    }
+
+    function saveData(key, data) {
+      localStorage.setItem(key, JSON.stringify(data));
+    }
+
+    function incrementAnalytics(type) {
+      const analytics = getStoredData(ANALYTICS_KEY, { siteVisits: 0, streams: 0, downloads: 0, purchases: 0 });
+      analytics[type]++;
+      saveData(ANALYTICS_KEY, analytics);
+      updateAnalyticsDisplay();
+    }
+
+    function updateAnalyticsDisplay() {
+      const analytics = getStoredData(ANALYTICS_KEY, { siteVisits: 0, streams: 0, downloads: 0, purchases: 0 });
+      siteVisitsEl.textContent = analytics.siteVisits;
+      totalStreamsEl.textContent = analytics.streams;
+      totalDownloadsEl.textContent = analytics.downloads;
+      totalPurchasesEl.textContent = analytics.purchases;
+
+      const purchases = getStoredData(PURCHASES_KEY, []);
+      purchasesList.innerHTML = purchases.slice(-10).reverse().map(purchase => `
+        <div class="border border-gray-200 rounded-custom p-4">
+          <div class="flex justify-between items-center">
+            <span class="font-semibold">${purchase.item}</span>
+            <span class="text-sm text-gray-500">${new Date(purchase.date).toLocaleDateString()}</span>
+          </div>
+          <p class="text-sm text-gray-600">${purchase.type} - KSH ${purchase.price}</p>
+        </div>
+      `).join('');
+    }
+
+    // Content functions
+    function getStoredItems() {
+      return getStoredData(STORAGE_KEY, defaultItems);
+    }
+
+    function saveItems(items) {
+      saveData(STORAGE_KEY, items);
+      renderUploads();
+    }
+
+    function addContentItem(type, title, description, source) {
+      const items = getStoredItems();
+      items.unshift({ id: `${type}-${Date.now()}`, type, title, description, source });
+      saveItems(items);
+    }
+
+    function renderUploads() {
+      const items = getStoredItems();
+      if (!uploadList) return;
+      if (!items.length) {
+        uploadList.innerHTML = '<p class="text-gray-500">No content uploads available yet.</p>';
+        return;
+      }
+      uploadList.innerHTML = items.map(item => `
+        <div class="border border-gray-200 rounded-custom p-5 bg-gray-50">
+          <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+            <div>
+              <span class="text-sm uppercase tracking-widest text-primary font-semibold">${item.type}</span>
+              <h3 class="text-xl font-bold mt-2">${item.title}</h3>
+            </div>
+            <span class="text-sm text-gray-500">${item.source}</span>
+          </div>
+          <p class="mt-3 text-gray-700">${item.description}</p>
+        </div>
+      `).join('');
+    }
+
+    // Events functions
+    function getStoredEvents() {
+      return getStoredData(EVENTS_KEY, defaultEvents);
+    }
+
+    function saveEvents(events) {
+      saveData(EVENTS_KEY, events);
+      renderEvents();
+    }
+
+    function addEvent(title, date, location, description, tickets) {
+      const events = getStoredEvents();
+      events.unshift({ id: `event-${Date.now()}`, title, date, location, description, tickets });
+      saveEvents(events);
+    }
+
+    function renderEvents() {
+      const events = getStoredEvents();
+      if (!eventsList) return;
+      if (!events.length) {
+        eventsList.innerHTML = '<p class="text-gray-500">No events available yet.</p>';
+        return;
+      }
+      eventsList.innerHTML = events.map(event => `
+        <div class="border border-gray-200 rounded-custom p-5 bg-gray-50">
+          <h3 class="text-xl font-bold mb-2">${event.title}</h3>
+          <p class="text-sm text-gray-600 mb-2">${event.date} - ${event.location}</p>
+          <p class="mb-4">${event.description}</p>
+          <div class="space-y-2">
+            ${event.tickets.map(ticket => `
+              <div class="flex justify-between items-center bg-white p-3 rounded">
+                <span>${ticket.type}</span>
+                <span>KSH ${ticket.price} (${ticket.available} available)</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Merchandise functions
+    function getStoredMerch() {
+      return getStoredData(MERCH_KEY, defaultMerch);
+    }
+
+    function saveMerch(merch) {
+      saveData(MERCH_KEY, merch);
+      renderMerch();
+    }
+
+    function addMerchItem(name, price, image, category, description) {
+      const merch = getStoredMerch();
+      merch.unshift({ id: `merch-${Date.now()}`, name, price: parseInt(price), image, category, description });
+      saveMerch(merch);
+    }
+
+    function renderMerch() {
+      const merch = getStoredMerch();
+      if (!merchList) return;
+      if (!merch.length) {
+        merchList.innerHTML = '<p class="text-gray-500">No merchandise available yet.</p>';
+        return;
+      }
+      merchList.innerHTML = merch.map(item => `
+        <div class="border border-gray-200 rounded-custom p-5 bg-gray-50">
+          <div class="flex gap-4">
+            <img src="${item.image}" alt="${item.name}" class="w-20 h-20 object-cover rounded">
+            <div class="flex-1">
+              <h3 class="text-xl font-bold mb-2">${item.name}</h3>
+              <p class="text-sm text-gray-600 mb-2">${item.category}</p>
+              <p class="mb-2">${item.description}</p>
+              <p class="font-semibold text-primary">KSH ${item.price}</p>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Event listeners
+    function initAdmin() {
+      if (unauthorizedCode) {
+        unauthorizedCode.textContent = `admin.html?token=${ADMIN_TOKEN}`;
+      }
+      if (urlToken !== ADMIN_TOKEN) {
+        unauthorizedMessage.classList.remove('hidden');
+        adminTools.classList.add('hidden');
+        return;
+      }
+      unauthorizedMessage.classList.add('hidden');
+      adminTools.classList.remove('hidden');
+
+      // Initialize all sections
+      renderUploads();
+      renderEvents();
+      renderMerch();
+      updateAnalyticsDisplay();
+    }
+
+    // Content form handlers
+    audioUploadForm.addEventListener('submit', event => {
+      event.preventDefault();
+      const formData = new FormData(audioUploadForm);
+      addContentItem(
+        'audio',
+        formData.get('audioTitle').trim(),
+        formData.get('audioDescription').trim(),
+        formData.get('audioFileName').trim() || 'Audio File'
+      );
+      audioUploadForm.reset();
+    });
+
+    videoUploadForm.addEventListener('submit', event => {
+      event.preventDefault();
+      const formData = new FormData(videoUploadForm);
+      addContentItem(
+        'video',
+        formData.get('videoTitle').trim(),
+        formData.get('videoDescription').trim(),
+        formData.get('videoFileName').trim() || 'Video File'
+      );
+      videoUploadForm.reset();
+    });
+
+    clearUploadsButton.addEventListener('click', () => {
+      saveData(STORAGE_KEY, []);
+      renderUploads();
+    });
+
+    // Events form handlers
+    eventForm.addEventListener('submit', event => {
+      event.preventDefault();
+      const formData = new FormData(eventForm);
+      const tickets = [];
+      const ticketInputs = ticketPackages.querySelectorAll('.ticket-package');
+      ticketInputs.forEach(pkg => {
+        const type = pkg.querySelector('input[name="ticketType"]').value.trim();
+        const price = parseInt(pkg.querySelector('input[name="ticketPrice"]').value);
+        const available = parseInt(pkg.querySelector('input[name="ticketAvailable"]').value);
+        if (type && price && available) {
+          tickets.push({ type, price, available });
+        }
+      });
+
+      addEvent(
+        formData.get('eventTitle').trim(),
+        formData.get('eventDate'),
+        formData.get('eventLocation').trim(),
+        formData.get('eventDescription').trim(),
+        tickets
+      );
+      eventForm.reset();
+      ticketPackages.innerHTML = `
+        <div class="ticket-package grid md:grid-cols-3 gap-4">
+          <input type="text" placeholder="Type (e.g., General)" name="ticketType" required class="px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+          <input type="number" placeholder="Price (KSH)" name="ticketPrice" required class="px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+          <input type="number" placeholder="Available" name="ticketAvailable" required class="px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+        </div>
+      `;
+    });
+
+    addTicketPackageButton.addEventListener('click', () => {
+      const newPackage = document.createElement('div');
+      newPackage.className = 'ticket-package grid md:grid-cols-3 gap-4';
+      newPackage.innerHTML = `
+        <input type="text" placeholder="Type (e.g., General)" name="ticketType" required class="px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+        <input type="number" placeholder="Price (KSH)" name="ticketPrice" required class="px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+        <input type="number" placeholder="Available" name="ticketAvailable" required class="px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+      `;
+      ticketPackages.appendChild(newPackage);
+    });
+
+    clearEventsButton.addEventListener('click', () => {
+      saveData(EVENTS_KEY, []);
+      renderEvents();
+    });
+
+    // Merchandise form handlers
+    merchForm.addEventListener('submit', event => {
+      event.preventDefault();
+      const formData = new FormData(merchForm);
+      addMerchItem(
+        formData.get('merchName').trim(),
+        formData.get('merchPrice'),
+        formData.get('merchImage').trim(),
+        formData.get('merchCategory').trim(),
+        formData.get('merchDescription').trim()
+      );
+      merchForm.reset();
+    });
+
+    clearMerchButton.addEventListener('click', () => {
+      saveData(MERCH_KEY, []);
+      renderMerch();
+    });
+
+    document.addEventListener('DOMContentLoaded', initAdmin);
+  </script>
+</body>
+</html>

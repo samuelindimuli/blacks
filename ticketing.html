@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ticketing - EnjoymentClan</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#FF5E14',
+            secondary: '#1A1A1A',
+            accent: '#FF9E00',
+            dark: '#121212',
+            light: '#FFFFFF',
+            gray: '#F5F5F5',
+            text: '#333333',
+            textLight: '#777777',
+          },
+          fontFamily: {
+            poppins: ['Poppins', 'sans-serif'],
+          },
+          boxShadow: {
+            sm: '0 2px 8px rgba(0,0,0,0.1)',
+            md: '0 4px 12px rgba(0,0,0,0.15)',
+            lg: '0 8px 24px rgba(0,0,0,0.2)',
+          },
+          borderRadius: {
+            custom: '8px',
+          },
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer components {
+      .btn {
+        @apply inline-block px-7 py-3 rounded-custom font-semibold uppercase tracking-wider text-sm transition-all duration-300 ease-in-out cursor-pointer text-center border-2 border-transparent;
+      }
+      .btn-primary {
+        @apply bg-primary text-light hover:bg-[#E04E00] hover:-translate-y-1 hover:shadow-md;
+      }
+      .btn-outline {
+        @apply bg-transparent text-primary border-primary hover:bg-primary hover:text-light hover:-translate-y-1 hover:shadow-md;
+      }
+    }
+  </style>
+</head>
+<body class="font-poppins text-text bg-light">
+  <header class="bg-dark text-light py-5">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <div class="flex justify-between items-center">
+        <div class="brand">
+          <a href="tail.html">
+            <img src="pics/white.png" alt="EnjoymentClan Logo" class="h-20">
+          </a>
+        </div>
+        <nav>
+          <a href="tail.html" class="text-light hover:text-primary">Back to Home</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <section class="py-20">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <h1 class="text-4xl font-bold text-center mb-8">Ticketing Center</h1>
+      <p class="text-lg text-center mb-12">Purchase tickets for events, merchandise, and exclusive experiences.</p>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <!-- Event Tickets -->
+        <div class="bg-white p-6 rounded-custom shadow-md">
+          <h2 class="text-2xl font-bold mb-4 text-center">Event Tickets</h2>
+          <p class="mb-4 text-center">Tickets for live performances and special events</p>
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-2">Select Event</label>
+            <select class="w-full px-3 py-2 border border-gray-300 rounded-custom">
+              <option>Live Performance - March 2026</option>
+              <option>DJ Event - April 2026</option>
+              <option>Special Showcase - May 2026</option>
+            </select>
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-2">Quantity</label>
+            <input type="number" min="1" value="1" class="w-full px-3 py-2 border border-gray-300 rounded-custom">
+          </div>
+          <div class="mb-4">
+            <p class="text-lg font-semibold">Price: ksh25.00 per ticket</p>
+          </div>
+          <button class="btn btn-primary w-full">Purchase Tickets</button>
+        </div>
+
+        <!-- VIP Experience -->
+        <div class="bg-white p-6 rounded-custom shadow-md">
+          <h2 class="text-2xl font-bold mb-4 text-center">VIP Experience</h2>
+          <p class="mb-4 text-center">Exclusive VIP packages with backstage access</p>
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-2">VIP Package</label>
+            <select class="w-full px-3 py-2 border border-gray-300 rounded-custom">
+              <option>Backstage Meet & Greet</option>
+              <option>VIP Lounge Access</option>
+              <option>Full Experience Package</option>
+            </select>
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-2">Quantity</label>
+            <input type="number" min="1" value="1" class="w-full px-3 py-2 border border-gray-300 rounded-custom">
+          </div>
+          <div class="mb-4">
+            <p class="text-lg font-semibold">Price: ksh75.00 per package</p>
+          </div>
+          <button class="btn btn-primary w-full">Purchase VIP</button>
+        </div>
+
+        <!-- Merchandise Tickets -->
+        <div class="bg-white p-6 rounded-custom shadow-md">
+          <h2 class="text-2xl font-bold mb-4 text-center">Merchandise</h2>
+          <p class="mb-4 text-center">Exclusive merchandise and collectibles</p>
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-2">Select Item</label>
+            <select class="w-full px-3 py-2 border border-gray-300 rounded-custom">
+              <option>Limited Edition T-Shirt</option>
+              <option>Exclusive Album</option>
+              <option>Collectible Item</option>
+            </select>
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-2">Quantity</label>
+            <input type="number" min="1" value="1" class="w-full px-3 py-2 border border-gray-300 rounded-custom">
+          </div>
+          <div class="mb-4">
+            <p class="text-lg font-semibold">Price: ksh15.00 per item</p>
+          </div>
+          <button class="btn btn-primary w-full">Add to Cart</button>
+        </div>
+      </div>
+
+      <!-- Cart Summary -->
+      <div class="mt-12 bg-white p-6 rounded-custom shadow-md">
+        <h2 class="text-2xl font-bold mb-4">Cart Summary</h2>
+        <div class="flex justify-between items-center">
+          <p>Total Items: <span id="totalItems">0</span></p>
+          <p>Total Price: ksh<span id="totalPrice">0.00</span></p>
+          <button class="btn btn-primary">Checkout</button>
+        </div>
+      </div>
+    </div>
+  <script src="config.js"></script>
+  <script>
+    const EVENTS_KEY = window.EC_CONFIG.eventsKey;
+    const PURCHASES_KEY = window.EC_CONFIG.purchasesKey;
+    const ANALYTICS_KEY = window.EC_CONFIG.analyticsKey;
+    const defaultEvents = window.EC_CONFIG.defaultEvents;
+
+    function getStoredEvents() {
+      const stored = localStorage.getItem(EVENTS_KEY);
+      if (!stored) {
+        localStorage.setItem(EVENTS_KEY, JSON.stringify(defaultEvents));
+        return defaultEvents;
+      }
+      try {
+        const parsed = JSON.parse(stored);
+        return Array.isArray(parsed) ? parsed : defaultEvents;
+      } catch (e) {
+        localStorage.setItem(EVENTS_KEY, JSON.stringify(defaultEvents));
+        return defaultEvents;
+      }
+    }
+
+    function incrementAnalytics(type) {
+      const analytics = JSON.parse(localStorage.getItem(ANALYTICS_KEY) || '{"siteVisits":0,"streams":0,"downloads":0,"purchases":0}');
+      analytics[type]++;
+      localStorage.setItem(ANALYTICS_KEY, JSON.stringify(analytics));
+    }
+
+    function logPurchase(item, type, price) {
+      const purchases = JSON.parse(localStorage.getItem(PURCHASES_KEY) || '[]');
+      purchases.push({ item, type, price, date: new Date().toISOString() });
+      localStorage.setItem(PURCHASES_KEY, JSON.stringify(purchases));
+      incrementAnalytics('purchases');
+    }
+
+    function renderEvents() {
+      const events = getStoredEvents();
+      const eventTicketsDiv = document.querySelector('.grid.md\\:grid-cols-2.lg\\:grid-cols-3.gap-8 > div:first-child');
+      if (!eventTicketsDiv || !events.length) return;
+
+      // Update the select dropdown with dynamic events
+      const select = eventTicketsDiv.querySelector('select');
+      select.innerHTML = events.map(event => `<option value="${event.id}">${event.title} - ${event.date}</option>`).join('');
+
+      // Add event listener for purchase
+      const purchaseBtn = eventTicketsDiv.querySelector('button');
+      purchaseBtn.addEventListener('click', () => {
+        const selectedEventId = select.value;
+        const quantity = parseInt(eventTicketsDiv.querySelector('input[type="number"]').value);
+        const event = events.find(e => e.id === selectedEventId);
+        if (event && event.tickets.length > 0) {
+          const price = event.tickets[0].price * quantity; // Using first ticket type for simplicity
+          logPurchase(event.title, 'Event Ticket', price);
+          alert(`Purchased ${quantity} ticket(s) for ${event.title} - Total: KSH ${price}`);
+        }
+      });
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      incrementAnalytics('siteVisits');
+      renderEvents();
+    });
+  </script>
