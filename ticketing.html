@@ -69,73 +69,21 @@
   <section class="py-20">
     <div class="container mx-auto px-5 max-w-6xl">
       <h1 class="text-4xl font-bold text-center mb-8">Ticketing Center</h1>
-      <p class="text-lg text-center mb-12">Purchase tickets for events, merchandise, and exclusive experiences.</p>
+      <p class="text-lg text-center mb-12">Browse and purchase tickets for upcoming events.</p>
 
-      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <!-- Event Tickets -->
-        <div class="bg-white p-6 rounded-custom shadow-md">
-          <h2 class="text-2xl font-bold mb-4 text-center">Event Tickets</h2>
-          <p class="mb-4 text-center">Tickets for live performances and special events</p>
-          <div class="mb-4">
-            <label class="block text-sm font-medium mb-2">Select Event</label>
-            <select class="w-full px-3 py-2 border border-gray-300 rounded-custom">
-              <option>Live Performance - March 2026</option>
-              <option>DJ Event - April 2026</option>
-              <option>Special Showcase - May 2026</option>
-            </select>
-          </div>
-          <div class="mb-4">
-            <label class="block text-sm font-medium mb-2">Quantity</label>
-            <input type="number" min="1" value="1" class="w-full px-3 py-2 border border-gray-300 rounded-custom">
-          </div>
-          <div class="mb-4">
-            <p class="text-lg font-semibold">Price: ksh25.00 per ticket</p>
-          </div>
-          <button class="btn btn-primary w-full">Purchase Tickets</button>
+      <!-- Events Section -->
+      <div class="mb-20">
+        <h2 class="text-3xl font-bold mb-8">Upcoming Events</h2>
+        <div id="eventsContainer" class="grid md:grid-cols-1 lg:grid-cols-2 gap-8">
+          <p class="text-center text-gray-500">Loading events...</p>
         </div>
+      </div>
 
-        <!-- VIP Experience -->
-        <div class="bg-white p-6 rounded-custom shadow-md">
-          <h2 class="text-2xl font-bold mb-4 text-center">VIP Experience</h2>
-          <p class="mb-4 text-center">Exclusive VIP packages with backstage access</p>
-          <div class="mb-4">
-            <label class="block text-sm font-medium mb-2">VIP Package</label>
-            <select class="w-full px-3 py-2 border border-gray-300 rounded-custom">
-              <option>Backstage Meet & Greet</option>
-              <option>VIP Lounge Access</option>
-              <option>Full Experience Package</option>
-            </select>
-          </div>
-          <div class="mb-4">
-            <label class="block text-sm font-medium mb-2">Quantity</label>
-            <input type="number" min="1" value="1" class="w-full px-3 py-2 border border-gray-300 rounded-custom">
-          </div>
-          <div class="mb-4">
-            <p class="text-lg font-semibold">Price: ksh75.00 per package</p>
-          </div>
-          <button class="btn btn-primary w-full">Purchase VIP</button>
-        </div>
-
-        <!-- Merchandise Tickets -->
-        <div class="bg-white p-6 rounded-custom shadow-md">
-          <h2 class="text-2xl font-bold mb-4 text-center">Merchandise</h2>
-          <p class="mb-4 text-center">Exclusive merchandise and collectibles</p>
-          <div class="mb-4">
-            <label class="block text-sm font-medium mb-2">Select Item</label>
-            <select class="w-full px-3 py-2 border border-gray-300 rounded-custom">
-              <option>Limited Edition T-Shirt</option>
-              <option>Exclusive Album</option>
-              <option>Collectible Item</option>
-            </select>
-          </div>
-          <div class="mb-4">
-            <label class="block text-sm font-medium mb-2">Quantity</label>
-            <input type="number" min="1" value="1" class="w-full px-3 py-2 border border-gray-300 rounded-custom">
-          </div>
-          <div class="mb-4">
-            <p class="text-lg font-semibold">Price: ksh15.00 per item</p>
-          </div>
-          <button class="btn btn-primary w-full">Add to Cart</button>
+      <!-- Merchandise Section -->
+      <div class="mb-12">
+        <h2 class="text-3xl font-bold mb-8">Merchandise</h2>
+        <div id="merchContainer" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <p class="text-center text-gray-500">Loading merchandise...</p>
         </div>
       </div>
 
@@ -152,10 +100,17 @@
   <script src="config.js"></script>
   <script>
     const EVENTS_KEY = window.EC_CONFIG.eventsKey;
+    const MERCH_KEY = window.EC_CONFIG.merchKey;
     const PURCHASES_KEY = window.EC_CONFIG.purchasesKey;
     const ANALYTICS_KEY = window.EC_CONFIG.analyticsKey;
     const defaultEvents = window.EC_CONFIG.defaultEvents;
+    const defaultMerch = window.EC_CONFIG.defaultMerch;
 
+    // WhatsApp configuration
+    const WHATSAPP_NUMBER = '254791615005'; // +254791615005 for Kenya
+    const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
+
+    // Storage functions
     function getStoredEvents() {
       const stored = localStorage.getItem(EVENTS_KEY);
       if (!stored) {
@@ -171,10 +126,25 @@
       }
     }
 
+    function getStoredMerch() {
+      const stored = localStorage.getItem(MERCH_KEY);
+      if (!stored) {
+        localStorage.setItem(MERCH_KEY, JSON.stringify(defaultMerch));
+        return defaultMerch;
+      }
+      try {
+        const parsed = JSON.parse(stored);
+        return Array.isArray(parsed) ? parsed : defaultMerch;
+      } catch (e) {
+        localStorage.setItem(MERCH_KEY, JSON.stringify(defaultMerch));
+        return defaultMerch;
+      }
+    }
+
     function incrementAnalytics(type) {
-      const analytics = JSON.parse(localStorage.getItem(ANALYTICS_KEY) || '{"siteVisits":0,"streams":0,"downloads":0,"purchases":0}');
-      analytics[type]++;
-      localStorage.setItem(ANALYTICS_KEY, JSON.stringify(analytics));
+      const analyticsData = JSON.parse(localStorage.getItem(ANALYTICS_KEY) || '{"siteVisits":0,"streams":0,"downloads":0,"purchases":0}');
+      analyticsData[type]++;
+      localStorage.setItem(ANALYTICS_KEY, JSON.stringify(analyticsData));
     }
 
     function logPurchase(item, type, price) {
@@ -184,32 +154,152 @@
       incrementAnalytics('purchases');
     }
 
-    function renderEvents() {
+    // Format date
+    function formatDate(dateString) {
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      return new Date(dateString + 'T00:00:00').toLocaleDateString('en-US', options);
+    }
+
+    // Send to WhatsApp
+    function sendToWhatsApp(message) {
+      const encodedMessage = encodeURIComponent(message);
+      const whatsappLink = `${WHATSAPP_URL}?text=${encodedMessage}`;
+      window.open(whatsappLink, '_blank');
+    }
+
+    // DOM Elements
+    const eventsContainer = document.getElementById('eventsContainer');
+    const merchContainer = document.getElementById('merchContainer');
+
+    // Initialize Events
+    function initializeEvents() {
       const events = getStoredEvents();
-      const eventTicketsDiv = document.querySelector('.grid.md\\:grid-cols-2.lg\\:grid-cols-3.gap-8 > div:first-child');
-      if (!eventTicketsDiv || !events.length) return;
+      
+      if (!events || events.length === 0) {
+        eventsContainer.innerHTML = '<p class="text-center text-gray-500 col-span-full">No events available yet.</p>';
+        return;
+      }
 
-      // Update the select dropdown with dynamic events
-      const select = eventTicketsDiv.querySelector('select');
-      select.innerHTML = events.map(event => `<option value="${event.id}">${event.title} - ${event.date}</option>`).join('');
+      eventsContainer.innerHTML = events.map(event => `
+        <div class="bg-white rounded-custom shadow-md overflow-hidden hover:shadow-lg transition-all duration-300">
+          <div class="p-6">
+            <div class="mb-4">
+              <h3 class="text-2xl font-bold mb-2">${event.title}</h3>
+              <div class="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-gray-600 mb-3">
+                <div class="flex items-center gap-2">
+                  <i class="fas fa-calendar-alt text-primary"></i>
+                  <span>${formatDate(event.date)}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <i class="fas fa-map-marker-alt text-primary"></i>
+                  <span>${event.location}</span>
+                </div>
+              </div>
+            </div>
+            
+            <p class="text-gray-700 mb-6">${event.description}</p>
+            
+            <div class="border-t pt-6">
+              <h4 class="font-semibold mb-4 text-lg">Available Tickets</h4>
+              <div class="space-y-4">
+                ${event.tickets.map(ticket => `
+                  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-gray-50 rounded-custom">
+                    <div class="flex-1">
+                      <div class="font-semibold text-lg">${ticket.type}</div>
+                      <div class="text-sm text-gray-600">KSH ${ticket.price} per ticket</div>
+                      <div class="text-xs text-gray-500 mt-1">${ticket.available} available</div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <input type="number" min="1" max="${ticket.available}" value="1" class="ticket-qty w-16 px-3 py-2 border border-gray-300 rounded-custom text-center" data-event-id="${event.id}" data-ticket-type="${ticket.type}" data-price="${ticket.price}" data-event-title="${event.title}">
+                      <button class="btn btn-primary px-4 py-2 text-sm purchase-btn" data-event-id="${event.id}" data-ticket-type="${ticket.type}" data-price="${ticket.price}" data-event-title="${event.title}">Buy</button>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
 
-      // Add event listener for purchase
-      const purchaseBtn = eventTicketsDiv.querySelector('button');
-      purchaseBtn.addEventListener('click', () => {
-        const selectedEventId = select.value;
-        const quantity = parseInt(eventTicketsDiv.querySelector('input[type="number"]').value);
-        const event = events.find(e => e.id === selectedEventId);
-        if (event && event.tickets.length > 0) {
-          const price = event.tickets[0].price * quantity; // Using first ticket type for simplicity
-          logPurchase(event.title, 'Event Ticket', price);
-          alert(`Purchased ${quantity} ticket(s) for ${event.title} - Total: KSH ${price}`);
-        }
+      // Add event listeners to purchase buttons
+      document.querySelectorAll('.purchase-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const eventId = btn.dataset.eventId;
+          const ticketType = btn.dataset.ticketType;
+          const price = parseInt(btn.dataset.price);
+          const eventTitle = btn.dataset.eventTitle;
+          const qtyInput = document.querySelector(`input[data-event-id="${eventId}"][data-ticket-type="${ticketType}"]`);
+          const quantity = parseInt(qtyInput.value) || 1;
+          
+          const totalPrice = price * quantity;
+          logPurchase(`${eventTitle} - ${ticketType}`, 'Event Ticket', totalPrice);
+          
+          // Create WhatsApp message
+          const message = `Hi! I would like to purchase ${quantity} ticket(s) for:\n\n📍 Event: ${eventTitle}\n🎫 Ticket Type: ${ticketType}\n💰 Price: KSH ${price} each\n💵 Total: KSH ${totalPrice}\n\nPlease confirm availability and proceed with payment.`;
+          
+          sendToWhatsApp(message);
+          qtyInput.value = 1;
+        });
+      });
+    }
+
+    // Initialize Merchandise
+    function initializeMerch() {
+      const merch = getStoredMerch();
+      
+      if (!merch || merch.length === 0) {
+        merchContainer.innerHTML = '<p class="text-center text-gray-500 col-span-full">No merchandise available yet.</p>';
+        return;
+      }
+
+      merchContainer.innerHTML = merch.map(item => `
+        <div class="bg-white rounded-custom shadow-md overflow-hidden hover:shadow-lg transition-all duration-300">
+          <div class="h-64 overflow-hidden bg-gray-100">
+            <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
+          </div>
+          <div class="p-6">
+            <div class="mb-3">
+              <h3 class="text-xl font-bold mb-1">${item.name}</h3>
+              <p class="text-sm text-primary font-semibold">${item.category}</p>
+            </div>
+            <p class="text-gray-700 text-sm mb-4">${item.description}</p>
+            
+            <div class="border-t pt-4">
+              <div class="flex justify-between items-center mb-4">
+                <span class="text-2xl font-bold text-primary">KSH ${item.price}</span>
+                <input type="number" min="1" value="1" class="merch-qty w-16 px-3 py-2 border border-gray-300 rounded-custom text-center" data-merch-id="${item.id}" data-price="${item.price}" data-name="${item.name}">
+              </div>
+              <button class="btn btn-primary w-full merch-btn" data-merch-id="${item.id}" data-price="${item.price}" data-name="${item.name}">Add to Cart</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      // Add event listeners to merchandise buttons
+      document.querySelectorAll('.merch-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const merchId = btn.dataset.merchId;
+          const price = parseInt(btn.dataset.price);
+          const name = btn.dataset.name;
+          const qtyInput = document.querySelector(`input[data-merch-id="${merchId}"]`);
+          const quantity = parseInt(qtyInput.value) || 1;
+          
+          const totalPrice = price * quantity;
+          logPurchase(name, 'Merchandise', totalPrice);
+          
+          // Create WhatsApp message
+          const message = `Hi! I would like to purchase ${quantity} item(s):\n\n👕 Item: ${name}\n💰 Price: KSH ${price} each\n💵 Total: KSH ${totalPrice}\n\nPlease confirm availability and proceed with payment.`;
+          
+          sendToWhatsApp(message);
+          qtyInput.value = 1;
+        });
       });
     }
 
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', () => {
       incrementAnalytics('siteVisits');
-      renderEvents();
+      initializeEvents();
+      initializeMerch();
     });
   </script>
