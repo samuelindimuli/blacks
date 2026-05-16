@@ -265,11 +265,31 @@
                 <div class="text-sm text-gray-600">Total Purchases</div>
               </div>
             </div>
+
+            <div class="grid md:grid-cols-2 gap-6 mt-8">
+              <div class="bg-blue-50 p-6 rounded-custom border border-blue-200 text-center">
+                <div class="text-3xl font-bold text-blue-600 mb-2" id="ticketPurchases">0</div>
+                <div class="text-sm text-gray-600">Ticket Purchases</div>
+              </div>
+              <div class="bg-green-50 p-6 rounded-custom border border-green-200 text-center">
+                <div class="text-3xl font-bold text-green-600 mb-2" id="merchPurchases">0</div>
+                <div class="text-sm text-gray-600">Merchandise Purchases</div>
+              </div>
+            </div>
           </section>
 
-          <section class="bg-white rounded-custom shadow-md p-8">
+          <section class="bg-white rounded-custom shadow-md p-8 mt-8">
             <h2 class="text-2xl font-bold mb-6">Recent Purchases</h2>
-            <div id="purchasesList" class="space-y-4"></div>
+            <div class="grid md:grid-cols-2 gap-8 mb-8">
+              <div>
+                <h3 class="text-lg font-semibold mb-4 text-blue-600">Ticket Purchases</h3>
+                <div id="ticketPurchasesList" class="space-y-4"></div>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold mb-4 text-green-600">Merchandise Purchases</h3>
+                <div id="merchPurchasesList" class="space-y-4"></div>
+              </div>
+            </div>
           </section>
         </div>
       </div>
@@ -311,7 +331,10 @@
     const totalStreamsEl = document.getElementById('totalStreams');
     const totalDownloadsEl = document.getElementById('totalDownloads');
     const totalPurchasesEl = document.getElementById('totalPurchases');
-    const purchasesList = document.getElementById('purchasesList');
+    const ticketPurchasesEl = document.getElementById('ticketPurchases');
+    const merchPurchasesEl = document.getElementById('merchPurchases');
+    const ticketPurchasesList = document.getElementById('ticketPurchasesList');
+    const merchPurchasesList = document.getElementById('merchPurchasesList');
 
     const defaultItems = window.EC_CONFIG.defaultItems;
     const defaultEvents = window.EC_CONFIG.defaultEvents;
@@ -373,15 +396,84 @@
       totalPurchasesEl.textContent = analytics.purchases;
 
       const purchases = getStoredData(PURCHASES_KEY, []);
-      purchasesList.innerHTML = purchases.slice(-10).reverse().map(purchase => `
-        <div class="border border-gray-200 rounded-custom p-4">
+      
+      // Separate ticket and merchandise purchases
+      const ticketPurchases = purchases.filter(p => p.type === 'Event Ticket');
+      const merchPurchases = purchases.filter(p => p.type !== 'Event Ticket');
+      
+      ticketPurchasesEl.textContent = ticketPurchases.length;
+      merchPurchasesEl.textContent = merchPurchases.length;
+      
+      // Group ticket purchases by event and ticket type
+      const ticketsByEvent = {};
+      ticketPurchases.forEach(purchase => {
+        // Extract event name and ticket type from item (format: "Event Title - Ticket Type")
+        const parts = purchase.item.split(' - ');
+        const eventName = parts[0];
+        const ticketType = parts[1] || 'Unknown';
+        
+        if (!ticketsByEvent[eventName]) {
+          ticketsByEvent[eventName] = {
+            totalCount: 0,
+            totalRevenue: 0,
+            byType: {},
+            purchases: []
+          };
+        }
+        
+        if (!ticketsByEvent[eventName].byType[ticketType]) {
+          ticketsByEvent[eventName].byType[ticketType] = {
+            count: 0,
+            revenue: 0
+          };
+        }
+        
+        ticketsByEvent[eventName].totalCount++;
+        ticketsByEvent[eventName].totalRevenue += purchase.price;
+        ticketsByEvent[eventName].byType[ticketType].count++;
+        ticketsByEvent[eventName].byType[ticketType].revenue += purchase.price;
+        ticketsByEvent[eventName].purchases.push(purchase);
+      });
+      
+      // Display ticket purchases organized by event and ticket type
+      if (Object.keys(ticketsByEvent).length > 0) {
+        // Sort events by most recent purchase
+        const sortedEvents = Object.entries(ticketsByEvent).sort((a, b) => {
+          const mostRecentA = a[1].purchases[a[1].purchases.length - 1];
+          const mostRecentB = b[1].purchases[b[1].purchases.length - 1];
+          return new Date(mostRecentB.date) - new Date(mostRecentA.date);
+        });
+        
+        ticketPurchasesList.innerHTML = sortedEvents.map(([eventName, data]) => `
+          <div class="border border-blue-200 rounded-custom p-4 bg-blue-50">
+            <div class="flex justify-between items-center mb-3 pb-3 border-b border-blue-200">
+              <span class="font-bold text-blue-700">${eventName}</span>
+              <span class="text-sm font-semibold text-blue-600">${data.totalCount} total • KSH ${data.totalRevenue}</span>
+            </div>
+            <div class="space-y-2">
+              ${Object.entries(data.byType).map(([type, typeData]) => `
+                <div class="flex justify-between items-center text-xs bg-white bg-opacity-50 p-2 rounded">
+                  <span class="text-gray-700">${type}</span>
+                  <span class="text-gray-600">${typeData.count}x @ KSH ${typeData.revenue}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `).join('');
+      } else {
+        ticketPurchasesList.innerHTML = '<p class="text-gray-500">No ticket purchases yet.</p>';
+      }
+      
+      // Display merchandise purchases - most recent first
+      merchPurchasesList.innerHTML = merchPurchases.length ? merchPurchases.slice().reverse().slice(0, 10).map(purchase => `
+        <div class="border border-green-200 rounded-custom p-4 bg-green-50">
           <div class="flex justify-between items-center">
             <span class="font-semibold">${purchase.item}</span>
             <span class="text-sm text-gray-500">${new Date(purchase.date).toLocaleDateString()}</span>
           </div>
           <p class="text-sm text-gray-600">${purchase.type} - KSH ${purchase.price}</p>
         </div>
-      `).join('');
+      `).join('') : '<p class="text-gray-500">No merchandise purchases yet.</p>';
     }
 
     // Content functions
