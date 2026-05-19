@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ticket Scanner - EnjoymentClan Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#FF5E14',
+            secondary: '#1A1A1A',
+            accent: '#FF9E00',
+            dark: '#121212',
+            light: '#FFFFFF',
+            gray: '#F5F5F5',
+            text: '#333333',
+            textLight: '#777777',
+          },
+          fontFamily: {
+            poppins: ['Poppins', 'sans-serif'],
+          },
+          borderRadius: {
+            custom: '8px',
+          },
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer components {
+      .btn {
+        @apply inline-block px-7 py-3 rounded-custom font-semibold uppercase tracking-wider text-sm transition-all duration-300 ease-in-out cursor-pointer text-center border-2 border-transparent;
+      }
+      .btn-primary {
+        @apply bg-primary text-light hover:bg-[#E04E00] hover:-translate-y-1 hover:shadow-md;
+      }
+      .btn-outline {
+        @apply bg-transparent text-primary border-primary hover:bg-primary hover:text-light hover:-translate-y-1 hover:shadow-md;
+      }
+    }
+    #video {
+      max-width: 100%;
+      border-radius: 8px;
+      border: 3px solid #FF5E14;
+    }
+  </style>
+</head>
+<body class="font-poppins text-text bg-light">
+  <header class="bg-dark text-light py-5">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <div class="flex justify-between items-center">
+        <div>
+          <a href="tail.html" class="inline-flex items-center gap-3 text-light hover:text-primary">
+            <img src="pics/white.png" alt="EnjoymentClan Logo" class="h-16">
+            Ticket Scanner
+          </a>
+        </div>
+        <nav>
+          <a href="admin.html?token=enjoyment-admin-token" class="text-light hover:text-primary">Back to Admin</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <section class="py-20">
+    <div class="container mx-auto px-5 max-w-2xl">
+      <h1 class="text-4xl font-bold text-center mb-2">🎫 Ticket Scanner</h1>
+      <p class="text-center text-gray-600 mb-8">Scan QR codes to verify one-time ticket usage</p>
+
+      <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+        <!-- Camera View -->
+        <div class="mb-6">
+          <div id="camera-section" class="space-y-4">
+            <video id="video" width="100%" height="auto" autoplay></video>
+            <div class="flex gap-3 justify-center">
+              <button id="startBtn" class="btn btn-primary">
+                <i class="fas fa-video mr-2"></i> Start Camera
+              </button>
+              <button id="stopBtn" class="btn btn-outline hidden">
+                <i class="fas fa-stop mr-2"></i> Stop Camera
+              </button>
+            </div>
+          </div>
+
+          <!-- Manual Input -->
+          <div class="border-t pt-6 mt-6">
+            <p class="text-sm text-gray-600 mb-2">Or manually enter ticket ID:</p>
+            <div class="flex gap-2">
+              <input type="text" id="ticketIdInput" placeholder="Paste ticket ID..." class="flex-1 px-4 py-3 border border-gray-300 rounded-custom">
+              <button id="verifyBtn" class="btn btn-primary">Verify</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Result Section -->
+        <div id="resultSection" class="hidden mt-8 p-6 rounded-lg border-2">
+          <div id="resultContent"></div>
+          <button id="nextBtn" class="btn btn-primary w-full mt-4">Scan Next Ticket</button>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid md:grid-cols-3 gap-4 mt-8 pt-8 border-t">
+          <div class="text-center">
+            <div class="text-3xl font-bold text-green-600" id="scannedCount">0</div>
+            <p class="text-gray-600 text-sm">Verified</p>
+          </div>
+          <div class="text-center">
+            <div class="text-3xl font-bold text-yellow-600" id="failedCount">0</div>
+            <p class="text-gray-600 text-sm">Failed</p>
+          </div>
+          <div class="text-center">
+            <div class="text-3xl font-bold text-primary" id="totalCount">0</div>
+            <p class="text-gray-600 text-sm">Total Scanned</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Instructions -->
+      <div class="bg-blue-50 border border-blue-200 p-8 rounded-lg">
+        <h2 class="text-2xl font-bold mb-4 text-blue-900">📋 How to Use</h2>
+        <ul class="space-y-3 text-blue-900">
+          <li class="flex gap-3">
+            <span class="font-bold text-primary">1.</span>
+            <span>Click "Start Camera" to activate your device camera</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="font-bold text-primary">2.</span>
+            <span>Hold the QR code in front of the camera</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="font-bold text-primary">3.</span>
+            <span>The system will automatically scan and verify the ticket</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="font-bold text-primary">4.</span>
+            <span>Each ticket can only be used once</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="font-bold text-primary">5.</span>
+            <span>You can also manually paste the ticket ID</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <script src="config.js"></script>
+  <script>
+    const API_BASE = 'http://localhost:5000/api';
+    let scanner = null;
+    let scannedStats = {
+      verified: 0,
+      failed: 0,
+      total: 0
+    };
+
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const video = document.getElementById('video');
+    const verifyBtn = document.getElementById('verifyBtn');
+    const ticketIdInput = document.getElementById('ticketIdInput');
+    const resultSection = document.getElementById('resultSection');
+    const nextBtn = document.getElementById('nextBtn');
+
+    // Start camera
+    startBtn.addEventListener('click', async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' }
+        });
+        video.srcObject = stream;
+        startBtn.classList.add('hidden');
+        stopBtn.classList.remove('hidden');
+        ticketIdInput.disabled = false;
+        startScanning();
+      } catch (error) {
+        alert(`Camera error: ${error.message}`);
+      }
+    });
+
+    // Stop camera
+    stopBtn.addEventListener('click', () => {
+      const stream = video.srcObject;
+      stream.getTracks().forEach(track => track.stop());
+      startBtn.classList.remove('hidden');
+      stopBtn.classList.add('hidden');
+      ticketIdInput.disabled = true;
+      if (scanner) scanner = null;
+    });
+
+    // Manual verification
+    verifyBtn.addEventListener('click', () => {
+      const ticketId = ticketIdInput.value.trim();
+      if (ticketId) {
+        verifyTicket(ticketId);
+      } else {
+        alert('Please enter a ticket ID');
+      }
+    });
+
+    ticketIdInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        verifyBtn.click();
+      }
+    });
+
+    // Next button
+    nextBtn.addEventListener('click', () => {
+      resultSection.classList.add('hidden');
+      ticketIdInput.value = '';
+      ticketIdInput.focus();
+    });
+
+    // QR Code scanning
+    function startScanning() {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      function scan() {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+          if (code) {
+            console.log('QR Code detected:', code.data);
+            verifyTicket(code.data);
+            scanner = null;
+            return;
+          }
+        }
+        if (scanner !== false) {
+          scanner = requestAnimationFrame(scan);
+        }
+      }
+      scan();
+    }
+
+    async function verifyTicket(ticketId) {
+      try {
+        resultSection.classList.add('hidden');
+
+        const response = await fetch(`${API_BASE}/tickets/${ticketId}/use`, {
+          method: 'POST'
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // Success
+          scannedStats.verified++;
+          showResult(true, `✅ Ticket Verified!`, `Ticket ${ticketId.slice(-8)} has been marked as used.`);
+        } else if (response.status === 400 && data.error === 'Ticket already used') {
+          // Already used
+          scannedStats.failed++;
+          showResult(false, `⚠️ Already Used`, `This ticket has already been scanned.`);
+        } else {
+          // Error
+          scannedStats.failed++;
+          showResult(false, `❌ Error`, data.error || 'Failed to verify ticket');
+        }
+
+        scannedStats.total++;
+        updateStats();
+        
+        // Resume scanning after delay
+        if (scanner !== false) {
+          setTimeout(() => {
+            nextBtn.click();
+            if (document.getElementById('stopBtn').classList.contains('hidden') === false) {
+              startScanning();
+            }
+          }, 3000);
+        }
+      } catch (error) {
+        console.error('Error verifying ticket:', error);
+        scannedStats.failed++;
+        scannedStats.total++;
+        showResult(false, `❌ Connection Error`, 'Make sure backend server is running');
+        updateStats();
+      }
+    }
+
+    function showResult(success, title, message) {
+      const resultContent = document.getElementById('resultContent');
+      resultContent.innerHTML = `
+        <div class="text-center">
+          <div class="text-6xl mb-4">${success ? '✅' : '❌'}</div>
+          <h3 class="text-2xl font-bold mb-2">${title}</h3>
+          <p class="text-gray-600">${message}</p>
+        </div>
+      `;
+      
+      resultSection.classList.remove('hidden');
+      resultSection.classList.remove('border-yellow-200', 'bg-yellow-50', 'border-green-200', 'bg-green-50', 'border-red-200', 'bg-red-50');
+      
+      if (success) {
+        resultSection.classList.add('border-green-200', 'bg-green-50');
+      } else {
+        resultSection.classList.add('border-red-200', 'bg-red-50');
+      }
+    }
+
+    function updateStats() {
+      document.getElementById('scannedCount').textContent = scannedStats.verified;
+      document.getElementById('failedCount').textContent = scannedStats.failed;
+      document.getElementById('totalCount').textContent = scannedStats.total;
+    }
+
+    // Check backend connectivity
+    async function checkBackend() {
+      try {
+        const response = await fetch(`${API_BASE.replace('/api', '')}/api/health`);
+        if (!response.ok) {
+          alert('⚠️ Backend server is offline. Please start it with: npm run dev');
+        }
+      } catch (error) {
+        alert('⚠️ Cannot connect to backend server. Please start it with: npm run dev');
+      }
+    }
+
+    // Check on page load
+    document.addEventListener('DOMContentLoaded', checkBackend);
+  </script>
+</body>
+</html>

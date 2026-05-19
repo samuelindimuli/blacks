@@ -61,11 +61,13 @@
       </div>
       <nav>
         <a href="content.html" class="btn btn-outline">View Content</a>
+        <a href="ticket-scanner.html" class="btn btn-primary ml-2">Ticket Scanner</a>
       </nav>
     </div>
   </header>
 
   <script src="config.js"></script>
+  <script src="backend/admin-dashboard.js"></script>
   <main class="py-20">
     <div class="container mx-auto px-5 max-w-6xl">
       <div class="text-center mb-12">
@@ -81,11 +83,14 @@
 
       <div id="adminTools" class="space-y-10 hidden">
         <!-- Tab Navigation -->
-        <div class="flex flex-wrap gap-2 mb-8">
-          <button id="tabContent" class="btn btn-primary tab-btn active" data-tab="content">Content</button>
-          <button id="tabEvents" class="btn btn-outline tab-btn" data-tab="events">Events</button>
-          <button id="tabMerch" class="btn btn-outline tab-btn" data-tab="merch">Merchandise</button>
-          <button id="tabAnalytics" class="btn btn-outline tab-btn" data-tab="analytics">Analytics</button>
+        <div class="flex flex-wrap gap-2 mb-8 justify-between items-center">
+          <div class="flex flex-wrap gap-2">
+            <button id="tabContent" class="btn btn-primary tab-btn active" data-tab="content">Content</button>
+            <button id="tabEvents" class="btn btn-outline tab-btn" data-tab="events">Events</button>
+            <button id="tabMerch" class="btn btn-outline tab-btn" data-tab="merch">Merchandise</button>
+            <button id="tabAnalytics" class="btn btn-outline tab-btn" data-tab="analytics">Analytics</button>
+          </div>
+          <button id="clearAllData" class="btn btn-outline bg-red-50 text-red-600 border-red-400 hover:bg-red-600 hover:text-white">Clear All Data</button>
         </div>
 
         <!-- Content Tab -->
@@ -245,7 +250,21 @@
 
         <!-- Analytics Tab -->
         <div id="analyticsTab" class="tab-content hidden">
-          <section class="bg-white rounded-custom shadow-md p-8">
+          <section class="bg-white rounded-custom shadow-md p-8 mb-8">
+            <h2 class="text-2xl font-bold mb-6">Ticket Analysis</h2>
+            <div class="mb-6">
+              <label class="block text-sm font-medium mb-2">Select Event</label>
+              <select id="eventSelect" class="w-full md:w-64 px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+                <option value="">-- Choose an event --</option>
+              </select>
+            </div>
+            <div id="analyticsContainer" class="text-gray-500 text-center py-8">
+              Select an event to view ticket analytics
+            </div>
+          </section>
+
+          <!-- Legacy Analytics (kept for reference) -->
+          <section class="bg-white rounded-custom shadow-md p-8 mt-8">
             <h2 class="text-2xl font-bold mb-6">Site Analytics</h2>
             <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div class="bg-gray-50 p-6 rounded-custom border border-gray-200 text-center">
@@ -708,7 +727,55 @@
       renderMerch();
     });
 
-    document.addEventListener('DOMContentLoaded', initAdmin);
+    // Clear all data button
+    document.getElementById('clearAllData').addEventListener('click', () => {
+      if (confirm('⚠️ This will delete ALL data (content, events, merchandise, purchases, analytics). This cannot be undone. Are you sure?')) {
+        localStorage.clear();
+        console.log('✅ All data cleared');
+        // Reset page
+        location.reload();
+      }
+    });
+
+    // Initialize event selector for analytics
+    function initializeAnalyticsEvents() {
+      const eventSelect = document.getElementById('eventSelect');
+      const events = getStoredEvents();
+      
+      events.forEach(event => {
+        const option = document.createElement('option');
+        option.value = event.id;
+        option.textContent = event.title;
+        eventSelect.appendChild(option);
+      });
+
+      // Load events from config if no events in storage
+      if (events.length === 0 && defaultEvents.length > 0) {
+        defaultEvents.forEach(event => {
+          const option = document.createElement('option');
+          option.value = event.id;
+          option.textContent = event.title;
+          eventSelect.appendChild(option);
+        });
+      }
+
+      // Event change listener
+      eventSelect.addEventListener('change', (e) => {
+        if (e.target.value) {
+          analyticsDashboard.renderEventAnalytics(e.target.value);
+        } else {
+          const container = document.getElementById('analyticsContainer');
+          if (container) {
+            container.innerHTML = '<div class="text-gray-500 text-center py-8">Select an event to view ticket analytics</div>';
+          }
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initAdmin();
+      initializeAnalyticsEvents();
+    });
   </script>
 </body>
 </html>

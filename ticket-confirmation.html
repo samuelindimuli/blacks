@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ticket Confirmation - EnjoymentClan</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#FF5E14',
+            secondary: '#1A1A1A',
+            accent: '#FF9E00',
+            dark: '#121212',
+            light: '#FFFFFF',
+            gray: '#F5F5F5',
+            text: '#333333',
+            textLight: '#777777',
+          },
+          fontFamily: {
+            poppins: ['Poppins', 'sans-serif'],
+          },
+          borderRadius: {
+            custom: '8px',
+          },
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer components {
+      .btn {
+        @apply inline-block px-7 py-3 rounded-custom font-semibold uppercase tracking-wider text-sm transition-all duration-300 ease-in-out cursor-pointer text-center border-2 border-transparent;
+      }
+      .btn-primary {
+        @apply bg-primary text-light hover:bg-[#E04E00] hover:-translate-y-1 hover:shadow-md;
+      }
+      .btn-outline {
+        @apply bg-transparent text-primary border-primary hover:bg-primary hover:text-light hover:-translate-y-1 hover:shadow-md;
+      }
+    }
+  </style>
+</head>
+<body class="font-poppins text-text bg-light">
+  <header class="bg-dark text-light py-5">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <div class="flex justify-between items-center">
+        <div class="brand">
+          <a href="tail.html">
+            <img src="pics/white.png" alt="EnjoymentClan Logo" class="h-20">
+          </a>
+        </div>
+        <nav>
+          <a href="ticketing.html" class="text-light hover:text-primary">Back to Ticketing</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <section class="py-20">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold mb-4">🎉 Purchase Confirmed!</h1>
+        <p class="text-xl text-gray-600">Your tickets are ready. Save or screenshot these QR codes for entry.</p>
+      </div>
+
+      <div class="bg-white p-8 rounded-lg shadow-lg mb-8" id="ticketsContainer">
+        <!-- Tickets will be displayed here -->
+      </div>
+
+      <div class="flex gap-4 justify-center flex-wrap">
+        <button id="downloadBtn" class="btn btn-primary">
+          <i class="fas fa-download mr-2"></i> Download as PDF
+        </button>
+        <button id="printBtn" class="btn btn-outline">
+          <i class="fas fa-print mr-2"></i> Print
+        </button>
+        <a href="ticketing.html" class="btn btn-outline">
+          <i class="fas fa-arrow-left mr-2"></i> Back to Ticketing
+        </a>
+      </div>
+
+      <!-- Info Section -->
+      <div class="mt-12 bg-blue-50 border border-blue-200 p-8 rounded-lg">
+        <h2 class="text-2xl font-bold mb-4 text-blue-900">📋 Instructions</h2>
+        <ul class="space-y-3 text-blue-900">
+          <li class="flex gap-3">
+            <span class="font-bold text-primary">1.</span>
+            <span>Save or screenshot your QR codes</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="font-bold text-primary">2.</span>
+            <span>Show the QR code on your phone or printed ticket at entry</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="font-bold text-primary">3.</span>
+            <span>Admin will scan to verify attendance (one-time use only)</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="font-bold text-primary">4.</span>
+            <span>Each QR code can only be used once</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <script src="config.js"></script>
+  <script>
+    const API_BASE = 'http://localhost:5000/api';
+
+    async function loadTickets() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const orderId = urlParams.get('orderId');
+      const phone = urlParams.get('phone');
+
+      if (!orderId) {
+        document.getElementById('ticketsContainer').innerHTML = `
+          <div class="text-center text-red-600">
+            <p class="text-xl font-semibold">❌ No order found</p>
+            <p>Please return to ticketing and complete your purchase</p>
+          </div>
+        `;
+        return;
+      }
+
+      try {
+        // Fetch order details with tickets
+        const response = await fetch(`${API_BASE}/orders/${orderId}`);
+        if (!response.ok) throw new Error('Order not found');
+        
+        const order = await response.json();
+
+        if (!order.tickets || order.tickets.length === 0) {
+          document.getElementById('ticketsContainer').innerHTML = `
+            <div class="text-center text-yellow-600">
+              <p class="text-xl font-semibold">⏳ Tickets Processing</p>
+              <p>Your tickets are being generated. Please refresh in a moment.</p>
+            </div>
+          `;
+          setTimeout(loadTickets, 3000);
+          return;
+        }
+
+        displayTickets(order);
+      } catch (error) {
+        console.error('Error loading tickets:', error);
+        document.getElementById('ticketsContainer').innerHTML = `
+          <div class="text-center text-red-600">
+            <p class="text-xl font-semibold">❌ Error Loading Tickets</p>
+            <p>${error.message}</p>
+            <button onclick="location.reload()" class="btn btn-primary mt-4">Retry</button>
+          </div>
+        `;
+      }
+    }
+
+    function displayTickets(order) {
+      const container = document.getElementById('ticketsContainer');
+      
+      const html = `
+        <div class="space-y-8">
+          <!-- Order Header -->
+          <div class="border-b pb-6">
+            <h2 class="text-2xl font-bold mb-4">Order Details</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+              <div>
+                <p class="text-gray-600 text-sm">Order ID</p>
+                <p class="text-xl font-mono font-bold">${order.order_id}</p>
+              </div>
+              <div>
+                <p class="text-gray-600 text-sm">Event</p>
+                <p class="text-xl font-bold">${order.event_id}</p>
+              </div>
+              <div>
+                <p class="text-gray-600 text-sm">Total Amount</p>
+                <p class="text-xl font-bold text-primary">KSH ${order.amount.toLocaleString()}</p>
+              </div>
+              <div>
+                <p class="text-gray-600 text-sm">M-Pesa Receipt</p>
+                <p class="text-lg font-mono">${order.mpesa_receipt || 'Pending'}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tickets -->
+          <div>
+            <h2 class="text-2xl font-bold mb-6">Your Tickets (${order.tickets.length})</h2>
+            <div class="space-y-6" id="ticketsList">
+              ${order.tickets.map((ticket, idx) => `
+                <div class="border-2 border-primary p-6 rounded-lg bg-gradient-to-r from-primary/5 to-transparent">
+                  <div class="flex justify-between items-start mb-4">
+                    <div>
+                      <p class="text-sm text-gray-600">Ticket ${idx + 1} of ${order.tickets.length}</p>
+                      <p class="text-2xl font-bold">${order.ticket_type}</p>
+                      <p class="text-gray-600 font-mono text-sm mt-1">${ticket.ticket_id}</p>
+                    </div>
+                    <span class="bg-primary text-white px-4 py-2 rounded-full font-semibold">
+                      ${ticket.status === 'UNUSED' ? '✓ Valid' : '✗ Used'}
+                    </span>
+                  </div>
+
+                  <div class="bg-white p-6 rounded border border-gray-200 flex flex-col items-center">
+                    ${ticket.qr_code ? `
+                      <img src="${ticket.qr_code}" alt="QR Code for ${ticket.ticket_id}" class="w-64 h-64 border-4 border-gray-300 p-2">
+                      <p class="text-sm text-gray-600 mt-4 text-center">Scan this QR code at entry</p>
+                    ` : `
+                      <div class="w-64 h-64 bg-gray-100 flex items-center justify-center rounded border-4 border-dashed border-gray-300">
+                        <div class="text-center">
+                          <i class="fas fa-qrcode text-6xl text-gray-400 mb-2"></i>
+                          <p class="text-gray-600">Generating QR Code...</p>
+                        </div>
+                      </div>
+                    `}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+
+      // Setup download button
+      document.getElementById('downloadBtn').addEventListener('click', () => {
+        downloadAsPDF();
+      });
+
+      // Setup print button
+      document.getElementById('printBtn').addEventListener('click', () => {
+        window.print();
+      });
+    }
+
+    function downloadAsPDF() {
+      const element = document.getElementById('ticketsContainer');
+      const opt = {
+        margin: 10,
+        filename: `ticket-${new URLSearchParams(window.location.search).get('orderId')}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+      };
+      html2pdf().set(opt).from(element).save();
+    }
+
+    // Load tickets on page load
+    document.addEventListener('DOMContentLoaded', loadTickets);
+  </script>
+</body>
+</html>

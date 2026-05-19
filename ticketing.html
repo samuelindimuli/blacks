@@ -60,7 +60,7 @@
           </a>
         </div>
         <nav>
-          <a href="tail.html" class="text-light hover:text-primary">Back to Home</a>
+          <a href="index.html" class="text-light hover:text-primary">Back to Home</a>
         </nav>
       </div>
     </div>
@@ -69,100 +69,40 @@
   <section class="py-20">
     <div class="container mx-auto px-5 max-w-6xl">
       <h1 class="text-4xl font-bold text-center mb-8">Ticketing Center</h1>
-      <p class="text-lg text-center mb-12">Purchase tickets for events, merchandise, and exclusive experiences.</p>
+      <p class="text-lg text-center text-gray-600 mb-12">Purchase tickets for upcoming events</p>
 
-      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <!-- Event Tickets -->
-        <div class="bg-white p-6 rounded-custom shadow-md">
-          <h2 class="text-2xl font-bold mb-4 text-center">Event Tickets</h2>
-          <p class="mb-4 text-center">Tickets for live performances and special events</p>
-          <div class="mb-4">
-            <label class="block text-sm font-medium mb-2">Select Event</label>
-            <select class="w-full px-3 py-2 border border-gray-300 rounded-custom">
-              <option>Live Performance - March 2026</option>
-              <option>DJ Event - April 2026</option>
-              <option>Special Showcase - May 2026</option>
-            </select>
-          </div>
-          <div class="mb-4">
-            <label class="block text-sm font-medium mb-2">Quantity</label>
-            <input type="number" min="1" value="1" class="w-full px-3 py-2 border border-gray-300 rounded-custom">
-          </div>
-          <div class="mb-4">
-            <p class="text-lg font-semibold">Price: ksh25.00 per ticket</p>
-          </div>
-          <button class="btn btn-primary w-full">Purchase Tickets</button>
-        </div>
-
-        <!-- VIP Experience -->
-        <div class="bg-white p-6 rounded-custom shadow-md">
-          <h2 class="text-2xl font-bold mb-4 text-center">VIP Experience</h2>
-          <p class="mb-4 text-center">Exclusive VIP packages with backstage access</p>
-          <div class="mb-4">
-            <label class="block text-sm font-medium mb-2">VIP Package</label>
-            <select class="w-full px-3 py-2 border border-gray-300 rounded-custom">
-              <option>Backstage Meet & Greet</option>
-              <option>VIP Lounge Access</option>
-              <option>Full Experience Package</option>
-            </select>
-          </div>
-          <div class="mb-4">
-            <label class="block text-sm font-medium mb-2">Quantity</label>
-            <input type="number" min="1" value="1" class="w-full px-3 py-2 border border-gray-300 rounded-custom">
-          </div>
-          <div class="mb-4">
-            <p class="text-lg font-semibold">Price: ksh75.00 per package</p>
-          </div>
-          <button class="btn btn-primary w-full">Purchase VIP</button>
-        </div>
-
-        <!-- Merchandise Tickets -->
-        <div class="bg-white p-6 rounded-custom shadow-md">
-          <h2 class="text-2xl font-bold mb-4 text-center">Merchandise</h2>
-          <p class="mb-4 text-center">Exclusive merchandise and collectibles</p>
-          <div class="mb-4">
-            <label class="block text-sm font-medium mb-2">Select Item</label>
-            <select class="w-full px-3 py-2 border border-gray-300 rounded-custom">
-              <option>Limited Edition T-Shirt</option>
-              <option>Exclusive Album</option>
-              <option>Collectible Item</option>
-            </select>
-          </div>
-          <div class="mb-4">
-            <label class="block text-sm font-medium mb-2">Quantity</label>
-            <input type="number" min="1" value="1" class="w-full px-3 py-2 border border-gray-300 rounded-custom">
-          </div>
-          <div class="mb-4">
-            <p class="text-lg font-semibold">Price: ksh15.00 per item</p>
-          </div>
-          <button class="btn btn-primary w-full">Add to Cart</button>
+      <div id="eventsContainer" class="min-h-96 flex items-center justify-center">
+        <div class="text-center">
+          <i class="fas fa-calendar-alt text-6xl text-primary mb-4"></i>
+          <h2 class="text-3xl font-bold mb-2 text-gray-600">No Events Yet</h2>
+          <p class="text-xl text-gray-500">Check back soon for upcoming events! 🎉</p>
         </div>
       </div>
 
+      <!-- Event Cards (dynamically generated) -->
+      <div id="eventsList" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mt-8"></div>
+
       <!-- Cart Summary -->
-      <div class="mt-12 bg-white p-6 rounded-custom shadow-md">
+      <div class="mt-12 bg-white p-6 rounded-custom shadow-md hidden" id="cartSection">
         <h2 class="text-2xl font-bold mb-4">Cart Summary</h2>
-        <div class="flex justify-between items-center">
-          <p>Total Items: <span id="totalItems">0</span></p>
-          <p>Total Price: ksh<span id="totalPrice">0.00</span></p>
-          <button class="btn btn-primary">Checkout</button>
+        <div id="cartItems" class="space-y-3 mb-4"></div>
+        <div class="border-t pt-4 flex justify-between items-center">
+          <p class="text-lg font-semibold">Total: ksh<span id="totalPrice">0.00</span></p>
+          <button id="checkoutBtn" class="btn btn-primary">Proceed to Checkout</button>
         </div>
       </div>
     </div>
+  </section>
   <script src="config.js"></script>
   <script>
     const EVENTS_KEY = window.EC_CONFIG.eventsKey;
-    const MERCH_KEY = window.EC_CONFIG.merchKey;
     const PURCHASES_KEY = window.EC_CONFIG.purchasesKey;
     const ANALYTICS_KEY = window.EC_CONFIG.analyticsKey;
     const defaultEvents = window.EC_CONFIG.defaultEvents;
-    const defaultMerch = window.EC_CONFIG.defaultMerch;
 
-    // WhatsApp configuration
-    const WHATSAPP_NUMBER = '254791615005'; // +254791615005 for Kenya
-    const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
+    let cart = [];
 
-    // Storage functions
+    // Get stored events from admin
     function getStoredEvents() {
       const stored = localStorage.getItem(EVENTS_KEY);
       if (!stored) {
@@ -178,79 +118,220 @@
       }
     }
 
-    function getStoredMerch() {
-      const stored = localStorage.getItem(MERCH_KEY);
-      if (!stored) {
-        localStorage.setItem(MERCH_KEY, JSON.stringify(defaultMerch));
-        return defaultMerch;
-      }
-      try {
-        const parsed = JSON.parse(stored);
-        return Array.isArray(parsed) ? parsed : defaultMerch;
-      } catch (e) {
-        localStorage.setItem(MERCH_KEY, JSON.stringify(defaultMerch));
-        return defaultMerch;
-      }
-    }
-
-    function incrementAnalytics(type) {
-      const analyticsData = JSON.parse(localStorage.getItem(ANALYTICS_KEY) || '{"siteVisits":0,"streams":0,"downloads":0,"purchases":0}');
-      analyticsData[type]++;
-      localStorage.setItem(ANALYTICS_KEY, JSON.stringify(analyticsData));
-    }
-
-    function logPurchase(item, type, price) {
-      const purchases = JSON.parse(localStorage.getItem(PURCHASES_KEY) || '[]');
-      purchases.push({ item, type, price, date: new Date().toISOString() });
-      localStorage.setItem(PURCHASES_KEY, JSON.stringify(purchases));
-      incrementAnalytics('purchases');
-    }
-
-    // Format date
-    function formatDate(dateString) {
-      const options = { year: 'numeric', month: 'long', day: 'numeric' };
-      return new Date(dateString + 'T00:00:00').toLocaleDateString('en-US', options);
-    }
-
-    // Send to WhatsApp
-    function sendToWhatsApp(message) {
-      const encodedMessage = encodeURIComponent(message);
-      const whatsappLink = `${WHATSAPP_URL}?text=${encodedMessage}`;
-      window.open(whatsappLink, '_blank');
-    }
-
-    // DOM Elements
-    const eventsContainer = document.getElementById('eventsContainer');
-    const merchContainer = document.getElementById('merchContainer');
-
-    // Initialize Events
-    function initializeEvents() {
+    // Render events dynamically
+    function renderEvents() {
       const events = getStoredEvents();
-      const eventTicketsDiv = document.querySelector('.grid.md\\:grid-cols-2.lg\\:grid-cols-3.gap-8 > div:first-child');
-      if (!eventTicketsDiv || !events.length) return;
+      const eventsList = document.getElementById('eventsList');
+      const eventsContainer = document.getElementById('eventsContainer');
+      const cartSection = document.getElementById('cartSection');
 
-      // Update the select dropdown with dynamic events
-      const select = eventTicketsDiv.querySelector('select');
-      select.innerHTML = events.map(event => `<option value="${event.id}">${event.title} - ${event.date}</option>`).join('');
+      if (!events || events.length === 0) {
+        eventsList.innerHTML = '';
+        eventsContainer.classList.remove('hidden');
+        cartSection.classList.add('hidden');
+        return;
+      }
 
-      // Add event listener for purchase
-      const purchaseBtn = eventTicketsDiv.querySelector('button');
-      purchaseBtn.addEventListener('click', () => {
-        const selectedEventId = select.value;
-        const quantity = parseInt(eventTicketsDiv.querySelector('input[type="number"]').value);
-        const event = events.find(e => e.id === selectedEventId);
-        if (event && event.tickets.length > 0) {
-          const price = event.tickets[0].price * quantity; // Using first ticket type for simplicity
-          logPurchase(event.title, 'Event Ticket', price);
-          alert(`Purchased ${quantity} ticket(s) for ${event.title} - Total: KSH ${price}`);
-        }
+      eventsContainer.classList.add('hidden');
+      eventsList.innerHTML = events.map(event => `
+        <div class="bg-white p-6 rounded-custom shadow-md hover:shadow-lg transition">
+          <h3 class="text-2xl font-bold mb-2">${event.title}</h3>
+          <p class="text-gray-600 mb-2">
+            <i class="fas fa-calendar-alt mr-2 text-primary"></i>
+            ${new Date(event.date).toLocaleDateString()}
+          </p>
+          <p class="text-gray-600 mb-4">
+            <i class="fas fa-map-marker-alt mr-2 text-primary"></i>
+            ${event.location}
+          </p>
+          <p class="text-gray-700 mb-4">${event.description}</p>
+
+          <div class="space-y-3">
+            ${event.tickets.map((ticket, idx) => `
+              <div class="border border-gray-200 p-3 rounded bg-gray-50">
+                <div class="flex justify-between items-center mb-2">
+                  <span class="font-semibold">${ticket.type}</span>
+                  <span class="text-primary font-bold">ksh ${ticket.price}</span>
+                </div>
+                <div class="flex gap-2 items-center">
+                  <input type="number" min="1" max="${ticket.available}" value="1" class="w-16 px-2 py-1 border border-gray-300 rounded text-center ticket-qty" data-event-id="${event.id}" data-ticket-type="${ticket.type}" data-price="${ticket.price}">
+                  <span class="text-sm text-gray-500">${ticket.available} available</span>
+                  <button class="btn btn-outline text-xs py-1 px-3 ml-auto add-to-cart" data-event="${event.title}" data-ticket-type="${ticket.type}" data-price="${ticket.price}">Add</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+
+      // Add event listeners to buttons
+      document.querySelectorAll('.add-to-cart').forEach(btn => {
+        btn.addEventListener('click', addToCart);
       });
     }
 
+    function addToCart(e) {
+      const btn = e.target;
+      const event = btn.dataset.event;
+      const ticketType = btn.dataset.ticketType;
+      const price = parseFloat(btn.dataset.price);
+      
+      const qtyInput = btn.parentElement.querySelector('.ticket-qty');
+      const quantity = parseInt(qtyInput.value) || 1;
+
+      cart.push({
+        event,
+        ticketType,
+        price,
+        quantity,
+        total: price * quantity,
+        id: Date.now()
+      });
+
+      updateCart();
+      alert(`✅ Added ${quantity}x ${ticketType} ticket(s) for ${event}`);
+    }
+
+    function updateCart() {
+      const cartSection = document.getElementById('cartSection');
+      const cartItems = document.getElementById('cartItems');
+      
+      if (cart.length === 0) {
+        cartSection.classList.add('hidden');
+        return;
+      }
+
+      cartSection.classList.remove('hidden');
+      
+      let total = 0;
+      cartItems.innerHTML = cart.map((item, idx) => {
+        total += item.total;
+        return `
+          <div class="flex justify-between items-center bg-gray-50 p-3 rounded">
+            <span>${item.quantity}x ${item.ticketType} - ${item.event}</span>
+            <div class="flex gap-4 items-center">
+              <span>ksh ${item.total}</span>
+              <button onclick="removeFromCart(${idx})" class="text-red-600 hover:text-red-800 text-sm">Remove</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('totalPrice').textContent = total.toFixed(2);
+    }
+
+    function removeFromCart(idx) {
+      cart.splice(idx, 1);
+      updateCart();
+    }
+
+    document.getElementById('checkoutBtn')?.addEventListener('click', async () => {
+      if (cart.length === 0) {
+        alert('Cart is empty');
+        return;
+      }
+
+      // Get customer phone number
+      const phone = prompt('Enter your phone number (e.g., 0791615005):');
+      if (!phone) return;
+
+      // Validate phone format
+      if (!/^(254|\+254|0)[17][0-9]{8}$/.test(phone.replace(/\s/g, ''))) {
+        alert('Invalid phone number format. Please use format like 0791615005 or +254791615005');
+        return;
+      }
+
+      const total = cart.reduce((sum, item) => sum + item.total, 0);
+      const cartSummary = cart.map(item => `${item.quantity}x ${item.ticketType} (${item.event})`).join(', ');
+      
+      // Get first event from cart
+      const eventId = cart[0]?.event || 'unknown-event';
+      const ticketType = cart.map(item => item.ticketType).join(', ');
+      const ticketsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+      try {
+        // Show loading
+        const checkoutBtn = document.getElementById('checkoutBtn');
+        const originalText = checkoutBtn.textContent;
+        checkoutBtn.textContent = 'Processing...';
+        checkoutBtn.disabled = true;
+
+        // Step 1: Create order on backend
+        const createOrderResponse = await fetch('http://localhost:5000/api/orders/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            eventId,
+            amount: total,
+            phone,
+            ticketsCount,
+            ticketType
+          })
+        });
+
+        if (!createOrderResponse.ok) {
+          throw new Error('Failed to create order');
+        }
+
+        const orderData = await createOrderResponse.json();
+        const orderId = orderData.orderId;
+
+        // Step 2: Initiate M-Pesa STK push
+        const stkResponse = await fetch('http://localhost:5000/api/mpesa/stk-push', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId,
+            amount: total,
+            phone: phone.startsWith('254') ? phone : '254' + phone.slice(1)
+          })
+        });
+
+        const stkData = await stkResponse.json();
+
+        if (stkResponse.ok) {
+          // Save purchase to localStorage
+          const purchases = JSON.parse(localStorage.getItem(PURCHASES_KEY) || '[]');
+          const purchase = {
+            type: 'Tickets',
+            items: cart,
+            total,
+            phone,
+            orderId,
+            date: new Date().toISOString()
+          };
+          purchases.push(purchase);
+          localStorage.setItem(PURCHASES_KEY, JSON.stringify(purchases));
+
+          // Redirect to ticket confirmation page
+          setTimeout(() => {
+            window.location.href = `ticket-confirmation.html?orderId=${orderId}&phone=${phone}`;
+          }, 1500);
+
+          alert(`✅ Payment prompt sent!\n\nRedirecting to your tickets...`);
+          
+          // Clear cart
+          cart = [];
+          updateCart();
+        } else {
+          throw new Error(stkData.error || 'Failed to initiate payment');
+        }
+      } catch (error) {
+        console.error('Checkout error:', error);
+        alert(`❌ Error: ${error.message}\n\nMake sure the backend server is running: npm run dev`);
+      } finally {
+        const checkoutBtn = document.getElementById('checkoutBtn');
+        checkoutBtn.textContent = 'Proceed to Checkout';
+        checkoutBtn.disabled = false;
+      }
+    });
+
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', () => {
-      incrementAnalytics('siteVisits');
-      initializeEvents();
-      initializeMerch();
+      renderEvents();
+      // Refresh events every 5 seconds to catch admin updates
+      setInterval(renderEvents, 5000);
     });
   </script>
+</body>
+</html>
