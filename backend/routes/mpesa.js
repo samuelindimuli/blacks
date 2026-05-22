@@ -36,7 +36,7 @@ router.post('/stk-push', async (req, res) => {
       PartyA: phone.startsWith('254') ? phone : '254' + phone.slice(1),
       PartyB: businessShortCode,
       PhoneNumber: phone.startsWith('254') ? phone : '254' + phone.slice(1),
-      CallBackURL: `${process.env.FRONTEND_URL}/api/mpesa/callback`,
+      CallBackURL: `${process.env.BACKEND_URL}/api/mpesa/callback`,
       AccountReference: orderId,
       TransactionDesc: `Payment for tickets - ${orderId}`
     };
@@ -160,6 +160,14 @@ async function getMpesaAccessToken() {
   try {
     const key = process.env.MPESA_CONSUMER_KEY;
     const secret = process.env.MPESA_CONSUMER_SECRET;
+    
+    if (!key || !secret) {
+      console.error('❌ M-Pesa credentials missing! Check your .env file');
+      console.error('   MPESA_CONSUMER_KEY:', key ? '✓ Set' : '✗ Missing');
+      console.error('   MPESA_CONSUMER_SECRET:', secret ? '✓ Set' : '✗ Missing');
+      return null;
+    }
+
     const auth = Buffer.from(`${key}:${secret}`).toString('base64');
 
     const response = await axios.get(
@@ -173,7 +181,13 @@ async function getMpesaAccessToken() {
 
     return response.data.access_token;
   } catch (error) {
-    console.error('Error getting M-Pesa token:', error.message);
+    console.error('❌ M-Pesa token request failed:');
+    console.error('   Status:', error.response?.status);
+    console.error('   Error:', error.response?.data?.error_description || error.message);
+    console.error('\n   This usually means:');
+    console.error('   - Invalid or expired M-Pesa credentials');
+    console.error('   - Check MPESA_CONSUMER_KEY and MPESA_CONSUMER_SECRET in .env');
+    console.error('   - Visit: https://developer.safaricom.co.ke/ to get valid credentials');
     return null;
   }
 }
