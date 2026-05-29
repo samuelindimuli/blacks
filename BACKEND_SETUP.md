@@ -49,10 +49,10 @@ cp backend/.env.example backend/.env
 Edit `backend/.env`:
 ```
 PORT=5000
-MPESA_CONSUMER_KEY=your_safaricom_api_key
-MPESA_CONSUMER_SECRET=your_safaricom_api_secret
+MPESA_CONSUMER_KEY=242IituE43wh0zLtIOUofGisLLDWC9TIpZXtFkdaCw5RLrKz
+MPESA_CONSUMER_SECRET=3jTDarilfUVxpKGtZkprwNfCR7ye2GhCKxhjI1acnlAvNCUYi8D8xZu7mANwG83l
 MPESA_SHORTCODE=174379
-MPESA_PASSKEY=bfb279f9aa9bdbcf158e97dd1a503b6e
+MPESA_PASSKEY=bfb279f9aa9bdbcf158e97dd1a503b6e72ada1ed2c9191c5a88346309dff624b
 MPESA_PHONE=0791615005
 MPESA_ENVIRONMENT=sandbox
 ADMIN_TOKEN=enjoyment-admin-token

@@ -1,4 +1,5 @@
-node_modules/
+revienode_modules/
+.env
 backend/.env
 backend/enjoymentclan.db
 .DS_Store

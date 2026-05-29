@@ -33,11 +33,25 @@ const dbAll = (sql, params = []) => {
 };
 
 const initializeDatabase = () => {
+  // Create Events table (if not exists)
+  db.run(`
+    CREATE TABLE IF NOT EXISTS events (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      description TEXT,
+      date TEXT NOT NULL,
+      location TEXT,
+      price_per_ticket REAL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
   // Create Orders table
   db.run(`
     CREATE TABLE IF NOT EXISTS orders (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       order_id TEXT UNIQUE NOT NULL,
+      checkout_request_id TEXT UNIQUE, -- UPDATED: Connects the order directly to the STK push tracking token
       event_id TEXT NOT NULL,
       status TEXT DEFAULT 'PENDING',
       amount REAL NOT NULL,
@@ -69,24 +83,12 @@ const initializeDatabase = () => {
     )
   `);
 
-  // Create Events table (if not exists)
-  db.run(`
-    CREATE TABLE IF NOT EXISTS events (
-      id TEXT PRIMARY KEY,
-      title TEXT NOT NULL,
-      description TEXT,
-      date TEXT NOT NULL,
-      location TEXT,
-      price_per_ticket REAL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-
   // Create M-Pesa Logs table for debugging
   db.run(`
     CREATE TABLE IF NOT EXISTS mpesa_logs (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       order_id TEXT,
+      checkout_request_id TEXT, -- UPDATED: Tracks Safaricom's transaction reference code
       phone TEXT,
       amount REAL,
       transaction_id TEXT,
@@ -95,6 +97,17 @@ const initializeDatabase = () => {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  // SAFE DEVELOPMENT MIGRATION ALTERATIONS:
+  // These statements will check if your live file is missing the new columns and add them dynamically 
+  // so you don't run into 'table missing column' crashes.
+  db.run(`ALTER TABLE orders ADD COLUMN checkout_request_id TEXT;`, [], (err) => {
+    // Catch block handles hiding standard "duplicate column name" logs gracefully if it's already present
+  });
+
+  db.run(`ALTER TABLE mpesa_logs ADD COLUMN checkout_request_id TEXT;`, [], (err) => {
+    // Quietly catch errors if the column is already built
+  });
 
   console.log('✅ Database initialized successfully');
 };

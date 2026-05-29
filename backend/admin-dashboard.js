@@ -3,7 +3,7 @@
 
 class TicketAnalyticsDashboard {
   constructor() {
-    this.apiBase = 'http://localhost:5000/api';
+    this.apiBase = 'http://localhost:3000/api';
     this.currentEventId = null;
     this.backendAvailable = false;
     this.checkBackendAvailability();

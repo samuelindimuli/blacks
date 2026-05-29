@@ -257,7 +257,7 @@
         checkoutBtn.disabled = true;
 
         // Step 1: Create order on backend
-        const createOrderResponse = await fetch('http://localhost:5000/api/orders/create', {
+        const createOrderResponse = await fetch('http://localhost:3000/api/orders/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -277,7 +277,7 @@
         const orderId = orderData.orderId;
 
         // Step 2: Initiate M-Pesa STK push
-        const stkResponse = await fetch('http://localhost:5000/api/mpesa/stk-push', {
+        const stkResponse = await fetch('http://localhost:3000/api/mpesa/stk-push', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
