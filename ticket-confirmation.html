@@ -112,7 +112,7 @@
 
   <script src="config.js"></script>
   <script>
-    const API_BASE = 'http://localhost:3000/api';
+    const API_BASE = window.EC_CONFIG.apiBaseUrl;
 
     async function loadTickets() {
       const urlParams = new URLSearchParams(window.location.search);

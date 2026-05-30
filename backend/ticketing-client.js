@@ -1,7 +1,12 @@
 // Frontend integration helper for ticketing system
-// Add this to your HTML or use it in your JavaScript
 
-const API_BASE = 'http://localhost:3000/api';
+const API_BASE = (typeof window !== 'undefined' && window.EC_CONFIG?.apiBaseUrl)
+  || process.env.API_BASE_URL
+  || 'http://localhost:3000/api';
+
+const ADMIN_TOKEN = (typeof window !== 'undefined' && window.EC_CONFIG?.adminToken)
+  || process.env.ADMIN_TOKEN
+  || 'enjoyment-admin-token';
 
 class TicketingClient {
   // Create new order
@@ -85,7 +90,8 @@ class TicketingClient {
   static async useTicket(ticketId) {
     try {
       const response = await fetch(`${API_BASE}/tickets/${ticketId}/use`, {
-        method: 'POST'
+        method: 'POST',
+        headers: { 'x-admin-token': ADMIN_TOKEN }
       });
       return await response.json();
     } catch (error) {
@@ -97,7 +103,9 @@ class TicketingClient {
   // Get event analytics
   static async getEventAnalytics(eventId) {
     try {
-      const response = await fetch(`${API_BASE}/analytics/event/${eventId}`);
+      const response = await fetch(`${API_BASE}/analytics/event/${eventId}`, {
+        headers: { 'x-admin-token': ADMIN_TOKEN }
+      });
       return await response.json();
     } catch (error) {
       console.error('Error fetching analytics:', error);
@@ -108,7 +116,9 @@ class TicketingClient {
   // Get all events analytics
   static async getAllAnalytics() {
     try {
-      const response = await fetch(`${API_BASE}/analytics`);
+      const response = await fetch(`${API_BASE}/analytics`, {
+        headers: { 'x-admin-token': ADMIN_TOKEN }
+      });
       return await response.json();
     } catch (error) {
       console.error('Error fetching all analytics:', error);
@@ -119,7 +129,9 @@ class TicketingClient {
   // Get conversion rate
   static async getConversionRate(eventId) {
     try {
-      const response = await fetch(`${API_BASE}/analytics/conversion/${eventId}`);
+      const response = await fetch(`${API_BASE}/analytics/conversion/${eventId}`, {
+        headers: { 'x-admin-token': ADMIN_TOKEN }
+      });
       return await response.json();
     } catch (error) {
       console.error('Error fetching conversion rate:', error);

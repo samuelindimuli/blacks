@@ -99,6 +99,7 @@
     const PURCHASES_KEY = window.EC_CONFIG.purchasesKey;
     const ANALYTICS_KEY = window.EC_CONFIG.analyticsKey;
     const defaultEvents = window.EC_CONFIG.defaultEvents;
+    const API_BASE = window.EC_CONFIG.apiBaseUrl;
 
     let cart = [];
 
@@ -156,7 +157,7 @@
                 <div class="flex gap-2 items-center">
                   <input type="number" min="1" max="${ticket.available}" value="1" class="w-16 px-2 py-1 border border-gray-300 rounded text-center ticket-qty" data-event-id="${event.id}" data-ticket-type="${ticket.type}" data-price="${ticket.price}">
                   <span class="text-sm text-gray-500">${ticket.available} available</span>
-                  <button class="btn btn-outline text-xs py-1 px-3 ml-auto add-to-cart" data-event="${event.title}" data-ticket-type="${ticket.type}" data-price="${ticket.price}">Add</button>
+                  <button class="btn btn-outline text-xs py-1 px-3 ml-auto add-to-cart" data-event-id="${event.id}" data-event-title="${event.title}" data-ticket-type="${ticket.type}" data-price="${ticket.price}">Add</button>
                 </div>
               </div>
             `).join('')}
@@ -172,15 +173,17 @@
 
     function addToCart(e) {
       const btn = e.target;
-      const event = btn.dataset.event;
+      const eventId = btn.dataset.eventId;
+      const eventTitle = btn.dataset.eventTitle;
       const ticketType = btn.dataset.ticketType;
       const price = parseFloat(btn.dataset.price);
-      
+
       const qtyInput = btn.parentElement.querySelector('.ticket-qty');
       const quantity = parseInt(qtyInput.value) || 1;
 
       cart.push({
-        event,
+        eventId,
+        eventTitle,
         ticketType,
         price,
         quantity,
@@ -189,7 +192,7 @@
       });
 
       updateCart();
-      alert(`✅ Added ${quantity}x ${ticketType} ticket(s) for ${event}`);
+      alert(`✅ Added ${quantity}x ${ticketType} ticket(s) for ${eventTitle}`);
     }
 
     function updateCart() {
@@ -208,7 +211,7 @@
         total += item.total;
         return `
           <div class="flex justify-between items-center bg-gray-50 p-3 rounded">
-            <span>${item.quantity}x ${item.ticketType} - ${item.event}</span>
+            <span>${item.quantity}x ${item.ticketType} - ${item.eventTitle}</span>
             <div class="flex gap-4 items-center">
               <span>ksh ${item.total}</span>
               <button onclick="removeFromCart(${idx})" class="text-red-600 hover:text-red-800 text-sm">Remove</button>
@@ -242,22 +245,17 @@
       }
 
       const total = cart.reduce((sum, item) => sum + item.total, 0);
-      const cartSummary = cart.map(item => `${item.quantity}x ${item.ticketType} (${item.event})`).join(', ');
-      
-      // Get first event from cart
-      const eventId = cart[0]?.event || 'unknown-event';
+
+      const eventId = cart[0]?.eventId || 'unknown-event';
       const ticketType = cart.map(item => item.ticketType).join(', ');
       const ticketsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
       try {
-        // Show loading
         const checkoutBtn = document.getElementById('checkoutBtn');
-        const originalText = checkoutBtn.textContent;
         checkoutBtn.textContent = 'Processing...';
         checkoutBtn.disabled = true;
 
-        // Step 1: Create order on backend
-        const createOrderResponse = await fetch('http://localhost:3000/api/orders/create', {
+        const createOrderResponse = await fetch(`${API_BASE}/orders/create`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -276,8 +274,9 @@
         const orderData = await createOrderResponse.json();
         const orderId = orderData.orderId;
 
-        // Step 2: Initiate M-Pesa STK push
-        const stkResponse = await fetch('http://localhost:3000/api/mpesa/stk-push', {
+        checkoutBtn.textContent = 'Awaiting payment...';
+
+        const stkResponse = await fetch(`${API_BASE}/mpesa/stk-push`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -289,32 +288,34 @@
 
         const stkData = await stkResponse.json();
 
-        if (stkResponse.ok) {
-          // Save purchase to localStorage
+        if (!stkResponse.ok) {
+          const message = stkData.hint || stkData.details || stkData.error || 'Failed to initiate payment';
+          throw new Error(message);
+        }
+
+        alert('✅ Payment prompt sent! Complete the payment on your phone.');
+
+        const paymentResult = await pollPaymentStatus(orderId);
+
+        if (paymentResult.status === 'CONFIRMED') {
           const purchases = JSON.parse(localStorage.getItem(PURCHASES_KEY) || '[]');
-          const purchase = {
+          purchases.push({
             type: 'Tickets',
             items: cart,
             total,
             phone,
             orderId,
             date: new Date().toISOString()
-          };
-          purchases.push(purchase);
+          });
           localStorage.setItem(PURCHASES_KEY, JSON.stringify(purchases));
 
-          // Redirect to ticket confirmation page
-          setTimeout(() => {
-            window.location.href = `ticket-confirmation.html?orderId=${orderId}&phone=${phone}`;
-          }, 1500);
-
-          alert(`✅ Payment prompt sent!\n\nRedirecting to your tickets...`);
-          
-          // Clear cart
           cart = [];
           updateCart();
+          window.location.href = `ticket-confirmation.html?orderId=${orderId}&phone=${phone}`;
+        } else if (paymentResult.status === 'FAILED') {
+          throw new Error('Payment was cancelled or failed. Please try again.');
         } else {
-          throw new Error(stkData.error || 'Failed to initiate payment');
+          throw new Error('Payment timed out. If you completed payment, check your tickets page or contact support.');
         }
       } catch (error) {
         console.error('Checkout error:', error);
@@ -325,6 +326,20 @@
         checkoutBtn.disabled = false;
       }
     });
+
+    async function pollPaymentStatus(orderId, maxAttempts = 30, intervalMs = 2000) {
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const response = await fetch(`${API_BASE}/mpesa/status/${orderId}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.status === 'CONFIRMED' || data.status === 'FAILED') {
+            return data;
+          }
+        }
+        await new Promise(resolve => setTimeout(resolve, intervalMs));
+      }
+      return { status: 'TIMEOUT' };
+    }
 
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', () => {

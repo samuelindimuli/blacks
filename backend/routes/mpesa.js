@@ -3,12 +3,32 @@ const router = express.Router();
 const axios = require('axios');
 const Order = require('../models/Order');
 const Ticket = require('../models/Ticket');
-const { dbRun } = require('../database');
+const { dbRun, dbGet } = require('../database');
+const {
+  getMpesaConfig,
+  getMpesaBaseUrl,
+  getMpesaTimestampVariants,
+  getMpesaTimestampNairobi,
+  getMpesaTimestampUtc,
+  getSandboxPasskeysToTry,
+  buildStkPassword,
+  formatStkFields,
+  validateMpesaConfig,
+  stkCredentialHint,
+  stkBusyHint,
+  isRetryableStkError
+} = require('../mpesa-config');
+
+const STK_MAX_RETRIES = 4;
+const STK_RETRY_BASE_MS = 4000;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 require('dotenv').config();
 
 // M-Pesa STK Push endpoint
 router.post('/stk-push', async (req, res) => {
-  // FIX: Variables declared at route scope level for safe access in the catch block
   let orderId = null;
   let amount = null;
   let phone = null;
@@ -20,59 +40,29 @@ router.post('/stk-push', async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Validate BACKEND_URL
-    if (!process.env.BACKEND_URL) {
-      return res.status(500).json({ error: 'BACKEND_URL not configured in .env' });
+    const mpesa = getMpesaConfig();
+    const missing = validateMpesaConfig(mpesa);
+    if (missing.length) {
+      return res.status(500).json({ error: `Missing .env: ${missing.join(', ')}` });
     }
 
-    if (process.env.BACKEND_URL.includes('localhost')) {
+    if (mpesa.backendUrl.includes('localhost')) {
       console.warn('⚠️  WARNING: BACKEND_URL is localhost, which will fail with M-Pesa');
       console.warn('   CallBackURL must be publicly accessible (HTTPS)');
     }
 
-    // Get access token
     console.log('🔐 Attempting to get M-Pesa access token...');
-    const token = await getMpesaAccessToken();
+    const token = await getMpesaAccessToken(mpesa);
     if (!token) {
-      console.error('❌ Token generation failed - check credentials');
+      console.error('❌ Token generation failed - check MPESA_CONSUMER_KEY and MPESA_CONSUMER_SECRET');
       return res.status(500).json({ error: 'Failed to get M-Pesa access token' });
     }
     console.log('✅ Access token obtained successfully');
 
-    // Prepare STK push data
-    // ==================== FIX START ====================
-    const businessShortCode = process.env.MPESA_SHORTCODE;
-    const passkey = process.env.MPESA_PASSKEY;
-
-    // Generate a strictly formatted timestamp string: YYYYMMDDHHmmss
-    const date = new Date();
-    const timestamp = 
-      date.getFullYear().toString() +
-      (date.getMonth() + 1).toString().padStart(2, '0') +
-      date.getDate().toString().padStart(2, '0') +
-      date.getHours().toString().padStart(2, '0') +
-      date.getMinutes().toString().padStart(2, '0') +
-      date.getSeconds().toString().padStart(2, '0');
-
-    // Generate the correct base64 password matching the timestamp exactly
-    const password = Buffer.from(businessShortCode + passkey + timestamp).toString('base64');
-
-    const callbackUrl = `${process.env.BACKEND_URL}/api/mpesa/callback`;
+    const businessShortCode = String(mpesa.shortcode);
+    const callbackUrl = `${mpesa.backendUrl}/api/mpesa/callback`;
     const formattedPhone = phone.startsWith('254') ? phone : '254' + phone.slice(1);
-    
-    const stkPushData = {
-      BusinessShortCode: businessShortCode,
-      Password: password,
-      Timestamp: timestamp,
-      TransactionType: 'CustomerPayBillOnline',
-      Amount: Math.round(amount),
-      PartyA: formattedPhone,
-      PartyB: businessShortCode,
-      PhoneNumber: formattedPhone,
-      CallBackURL: callbackUrl,
-      AccountReference: String(orderId), // Enforced string casting
-      TransactionDesc: `Payment for tickets - ${orderId}`
-    };
+    const stkFields = formatStkFields(orderId);
 
     console.log('📱 Initiating STK Push:');
     console.log('   Order ID:', orderId);
@@ -80,20 +70,31 @@ router.post('/stk-push', async (req, res) => {
     console.log('   Phone:', formattedPhone);
     console.log('   Callback URL:', callbackUrl);
 
-    const response = await axios.post(
-      'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest',
-      stkPushData,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
+    const mpesaBaseUrl = getMpesaBaseUrl(mpesa.environment);
+    const stkResult = await initiateStkPush({
+      mpesaBaseUrl,
+      token,
+      businessShortCode,
+      amount: Math.round(amount),
+      formattedPhone,
+      callbackUrl,
+      stkFields,
+      isSandbox: mpesa.isSandbox,
+      configPasskey: mpesa.passkey
+    });
 
+    const { response, passkeyUsed, timestampMode } = stkResult;
     const checkoutRequestId = response.data.CheckoutRequestID;
 
-    // FIX: Included checkout_request_id so we can look up this order later in the callback
+    if (mpesa.isSandbox && passkeyUsed !== mpesa.passkey) {
+      console.log('   ℹ️  STK succeeded with alternate sandbox passkey — update MPESA_PASSKEY in .env');
+    }
+    if (timestampMode) {
+      console.log('   ℹ️  Timestamp mode:', timestampMode);
+    }
+
+    await Order.updateCheckoutRequestId(orderId, checkoutRequestId);
+
     await dbRun(
       `INSERT INTO mpesa_logs (order_id, checkout_request_id, phone, amount, status, response_data) 
        VALUES (?, ?, ?, ?, 'INITIATED', ?)`,
@@ -109,29 +110,41 @@ router.post('/stk-push', async (req, res) => {
 
     console.log('✅ STK Push initiated successfully');
     console.log('   Checkout Request ID:', checkoutRequestId);
-
   } catch (error) {
     console.error('❌ Error initiating STK push:', error.response?.data || error.message);
-    
-    if (error.response?.data?.errorCode === '400.002.02') {
+
+    const errorCode = error.response?.data?.errorCode;
+    if (errorCode === '400.002.02') {
       console.error('   ⚠️  Invalid CallBackURL detected! Ensure ngrok is running and .env is updated.');
     }
-    
-    // FIX: Using fallbacks for scoped variables to prevent crashing on malformed request bodies
+    const credentialHint = stkCredentialHint(errorCode);
+    const busyHint = stkBusyHint(errorCode);
+    if (credentialHint) {
+      console.error('   ⚠️ ', credentialHint);
+    }
+    if (busyHint) {
+      console.warn('   ℹ️ ', busyHint);
+    }
+
     await dbRun(
       `INSERT INTO mpesa_logs (order_id, phone, amount, status, response_data) 
        VALUES (?, ?, ?, 'ERROR', ?)`,
       [
-        orderId || 'UNKNOWN', 
-        phone || null, 
-        amount ? Math.round(amount) : null, 
+        orderId || 'UNKNOWN',
+        phone || null,
+        amount ? Math.round(amount) : null,
         JSON.stringify(error.response?.data || error.message)
       ]
     );
 
-    res.status(500).json({ 
+    const statusCode = isRetryableStkError(errorCode) ? 503 : 500;
+
+    res.status(statusCode).json({
       error: 'Failed to initiate payment',
-      details: error.response?.data?.errorMessage || error.message
+      details: error.response?.data?.errorMessage || error.message,
+      errorCode: errorCode || undefined,
+      retryable: isRetryableStkError(errorCode),
+      hint: busyHint || credentialHint || undefined
     });
   }
 });
@@ -146,52 +159,58 @@ router.post('/callback', async (req, res) => {
     }
 
     const resultCode = callbackData.ResultCode;
-    const checkoutRequestId = callbackData.CheckoutRequestID; // Safaricom transaction tracking token
+    const checkoutRequestId = callbackData.CheckoutRequestID;
     const mpesaData = callbackData.CallbackMetadata?.Item;
 
-    // Log the incoming callback mapped to the checkoutRequestId
     await dbRun(
       `INSERT INTO mpesa_logs (checkout_request_id, status, response_data) 
        VALUES (?, ?, ?)`,
       [checkoutRequestId, resultCode === 0 ? 'SUCCESS' : 'FAILED', JSON.stringify(callbackData)]
     );
 
-    // FIX: Fallback attempt to derive the internal order ID from AccountReference (or log map if your Order model tracks checkout ids)
-    // For complete resilience, we read your order tracking parameter back out of Safaricom's metadata packet:
-    const fallbackOrderId = callbackData.CallbackMetadata?.Item?.find(item => item.Name === 'MerchantRequestID')?.Value || checkoutRequestId;
+    let order = null;
 
-    // Resolve order entity from your DB layer
-    const order = await Order.getById(fallbackOrderId);
+    const log = await dbGet(
+      `SELECT order_id FROM mpesa_logs 
+       WHERE checkout_request_id = ? AND order_id IS NOT NULL AND order_id != 'UNKNOWN'
+       ORDER BY id DESC LIMIT 1`,
+      [checkoutRequestId]
+    );
 
-    if (!order) {
-      console.error(`🚨 Received M-Pesa callback for an un-mapped transaction reference: ${checkoutRequestId}`);
-      // Return a 200 OK to stop Safaricom from flooding retries for an order that doesn't exist on our end
-      return res.json({ ResultCode: 0, ResultDesc: "Accepted" });
+    if (log?.order_id) {
+      order = await Order.getById(log.order_id);
     }
 
+    if (!order) {
+      order = await Order.getByCheckoutRequestId(checkoutRequestId);
+    }
+
+    if (!order) {
+      console.error(`🚨 M-Pesa callback for unmapped transaction: ${checkoutRequestId}`);
+      return res.json({ ResultCode: 0, ResultDesc: 'Accepted' });
+    }
+
+    const orderId = order.order_id;
+
     if (resultCode === 0) {
-      // Payment successful
       const mpesaReceiptNumber = mpesaData?.find(item => item.Name === 'MpesaReceiptNumber')?.Value;
       const amount = mpesaData?.find(item => item.Name === 'Amount')?.Value;
 
-      // FIX: Removed invalid 'TransactionId' tracking variable reference
-      await Order.updateStatus(order.id, 'CONFIRMED', mpesaReceiptNumber);
-
-      // Create tickets for this order
-      await Ticket.createMultiple(order.id, order.event_id, order.tickets_count);
-
-      console.log(`✅ Order ${order.id} confirmed with receipt ${mpesaReceiptNumber} for KSH ${amount}`);
-    } else {
-      // Payment failed
-      await Order.updateStatus(order.id, 'FAILED');
-      console.log(`❌ Order ${order.id} payment failed or cancelled by customer - Code: ${resultCode}`);
+      if (order.status === 'CONFIRMED') {
+        console.log(`ℹ️  Order ${orderId} already confirmed, skipping duplicate processing`);
+      } else {
+        await Order.updateStatus(orderId, 'CONFIRMED', mpesaReceiptNumber);
+        await Ticket.createMultiple(orderId, order.event_id, order.tickets_count);
+        console.log(`✅ Order ${orderId} confirmed with receipt ${mpesaReceiptNumber} for KSH ${amount}`);
+      }
+    } else if (order.status !== 'CONFIRMED') {
+      await Order.updateStatus(orderId, 'FAILED');
+      console.log(`❌ Order ${orderId} payment failed or cancelled - Code: ${resultCode}`);
     }
 
-    // Always respond with Safaricom's expected structure format
-    res.json({ ResultCode: 0, ResultDesc: "Success acknowledgment recorded" });
+    res.json({ ResultCode: 0, ResultDesc: 'Success acknowledgment recorded' });
   } catch (error) {
     console.error('Error processing callback:', error);
-    // FIX: Suppress internal 500 crashes to Safaricom to circumvent infinite callback loops
     res.status(200).json({ ResultCode: 1, ResultDesc: error.message });
   }
 });
@@ -220,24 +239,131 @@ router.get('/status/:orderId', async (req, res) => {
   }
 });
 
-// Get M-Pesa access token (sandbox)
-async function getMpesaAccessToken() {
+async function postStkRequest(mpesaBaseUrl, token, stkPushData) {
+  return axios.post(`${mpesaBaseUrl}/mpesa/stkpush/v1/processrequest`, stkPushData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  });
+}
+
+async function attemptStkPush({
+  mpesaBaseUrl,
+  token,
+  businessShortCode,
+  passkey,
+  timestampMode,
+  timestamp,
+  amount,
+  formattedPhone,
+  callbackUrl,
+  stkFields
+}) {
+  const password = buildStkPassword(businessShortCode, passkey, timestamp);
+  const stkPushData = {
+    BusinessShortCode: businessShortCode,
+    Password: password,
+    Timestamp: timestamp,
+    TransactionType: 'CustomerPayBillOnline',
+    Amount: amount,
+    PartyA: formattedPhone,
+    PartyB: businessShortCode,
+    PhoneNumber: formattedPhone,
+    CallBackURL: callbackUrl,
+    AccountReference: stkFields.AccountReference,
+    TransactionDesc: stkFields.TransactionDesc
+  };
+
+  const response = await postStkRequest(mpesaBaseUrl, token, stkPushData);
+
+  if (response.data?.CheckoutRequestID || response.data?.ResponseCode === '0') {
+    return { response, passkeyUsed: passkey, timestampMode };
+  }
+
+  const err = new Error(response.data?.errorMessage || 'STK push failed');
+  err.response = { data: response.data };
+  throw err;
+}
+
+async function initiateStkPush({
+  mpesaBaseUrl,
+  token,
+  businessShortCode,
+  amount,
+  formattedPhone,
+  callbackUrl,
+  stkFields,
+  isSandbox,
+  configPasskey
+}) {
+  const passkeys = isSandbox ? getSandboxPasskeysToTry(configPasskey) : [configPasskey];
+  const timestampModes = getMpesaTimestampVariants();
+  let lastError = null;
+
+  for (const passkey of passkeys) {
+    for (const { name: timestampMode } of timestampModes) {
+      for (let attempt = 1; attempt <= STK_MAX_RETRIES; attempt++) {
+        const timestamp =
+          timestampMode === 'utc' ? getMpesaTimestampUtc() : getMpesaTimestampNairobi();
+
+        try {
+          return await attemptStkPush({
+            mpesaBaseUrl,
+            token,
+            businessShortCode,
+            passkey,
+            timestampMode,
+            timestamp,
+            amount,
+            formattedPhone,
+            callbackUrl,
+            stkFields
+          });
+        } catch (error) {
+          lastError = error;
+          const code = error.response?.data?.errorCode;
+
+          if (isRetryableStkError(code) && attempt < STK_MAX_RETRIES) {
+            const waitMs = STK_RETRY_BASE_MS * attempt;
+            console.warn(
+              `   ⏳ M-Pesa busy (${code}), retry ${attempt}/${STK_MAX_RETRIES - 1} in ${waitMs / 1000}s...`
+            );
+            await sleep(waitMs);
+            continue;
+          }
+
+          if (code === '500.001.1001') {
+            break;
+          }
+
+          throw error;
+        }
+      }
+    }
+  }
+
+  throw lastError;
+}
+
+async function getMpesaAccessToken(mpesaConfig) {
   try {
-    const key = process.env.MPESA_CONSUMER_KEY;
-    const secret = process.env.MPESA_CONSUMER_SECRET;
-    
+    const mpesa = mpesaConfig || getMpesaConfig();
+    const { consumerKey: key, consumerSecret: secret, environment } = mpesa;
+
     if (!key || !secret) {
       console.error('❌ M-Pesa credentials missing! Check your .env file');
       return null;
     }
 
     const auth = Buffer.from(`${key}:${secret}`).toString('base64');
+    const mpesaBaseUrl = getMpesaBaseUrl(environment);
 
     const response = await axios.get(
-      'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials',
+      `${mpesaBaseUrl}/oauth/v1/generate?grant_type=client_credentials`,
       {
         headers: {
-          'Authorization': `Basic ${auth}`
+          Authorization: `Basic ${auth}`
         }
       }
     );

@@ -1,5 +1,6 @@
 window.EC_CONFIG = {
   adminToken: 'enjoyment-admin-token',
+  apiBaseUrl: 'http://localhost:3000/api',
   storageKey: 'ec_content_items',
   eventsKey: 'ec_events',
   merchKey: 'ec_merchandise',

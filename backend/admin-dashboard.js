@@ -3,7 +3,8 @@
 
 class TicketAnalyticsDashboard {
   constructor() {
-    this.apiBase = 'http://localhost:3000/api';
+    this.apiBase = window.EC_CONFIG?.apiBaseUrl || 'http://localhost:3000/api';
+    this.adminToken = window.EC_CONFIG?.adminToken || 'enjoyment-admin-token';
     this.currentEventId = null;
     this.backendAvailable = false;
     this.checkBackendAvailability();
@@ -43,7 +44,9 @@ class TicketAnalyticsDashboard {
 
   // Fetch analytics data from backend
   async fetchEventAnalytics(eventId) {
-    const response = await fetch(`${this.apiBase}/analytics/event/${eventId}`);
+    const response = await fetch(`${this.apiBase}/analytics/event/${eventId}`, {
+      headers: { 'x-admin-token': this.adminToken }
+    });
     if (!response.ok) throw new Error('Failed to fetch analytics');
     return await response.json();
   }

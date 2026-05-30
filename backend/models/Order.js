@@ -21,6 +21,16 @@ class Order {
     return dbGet(sql, [orderId]);
   }
 
+  static async getByCheckoutRequestId(checkoutRequestId) {
+    const sql = 'SELECT * FROM orders WHERE checkout_request_id = ?';
+    return dbGet(sql, [checkoutRequestId]);
+  }
+
+  static async updateCheckoutRequestId(orderId, checkoutRequestId) {
+    const sql = 'UPDATE orders SET checkout_request_id = ? WHERE order_id = ?';
+    await dbRun(sql, [checkoutRequestId, orderId]);
+  }
+
   static async updateStatus(orderId, status, mpesaReceipt = null, mpesaTransactionId = null) {
     let sql = 'UPDATE orders SET status = ?';
     const params = [status];

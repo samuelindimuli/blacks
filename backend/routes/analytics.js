@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
 const Ticket = require('../models/Ticket');
-const { dbGet, dbAll } = require('../database');
+const { requireAuth } = require('../middleware/auth');
 
 // Get analytics for a specific event
-router.get('/event/:eventId', async (req, res) => {
+router.get('/event/:eventId', requireAuth, async (req, res) => {
   try {
     const { eventId } = req.params;
 
@@ -81,7 +81,7 @@ router.get('/event/:eventId', async (req, res) => {
 });
 
 // Get all events analytics
-router.get('/', async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   try {
     const orders = await Order.getAll();
     
@@ -135,7 +135,7 @@ router.get('/', async (req, res) => {
 });
 
 // Get order conversion analysis
-router.get('/conversion/:eventId', async (req, res) => {
+router.get('/conversion/:eventId', requireAuth, async (req, res) => {
   try {
     const { eventId } = req.params;
     const orders = await Order.getByEvent(eventId);

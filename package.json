@@ -6,7 +6,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "server": "node backend/server.js",
     "dev": "nodemon backend/server.js",
-    "start": "npm run server"
+    "start": "npm run server",
+    "mpesa:test": "node troubleshoot-mpesa.js",
+    "mpesa:diagnose": "node scripts/mpesa-stk-diagnose.js"
   },
   "repository": {
     "type": "git",

@@ -1,59 +1,66 @@
 const axios = require('axios');
 require('dotenv').config();
+const {
+  getMpesaConfig,
+  getMpesaBaseUrl,
+  getMpesaTimestamp,
+  buildStkPassword,
+  validateMpesaConfig
+} = require('./backend/mpesa-config');
 
 async function troubleshootMpesa() {
   console.log('=== M-PESA TROUBLESHOOTING ===\n');
 
-  // 1. Check credentials format
-  console.log('1. CREDENTIALS FORMAT CHECK:');
-  console.log('   Shortcode:', process.env.MPESA_SHORTCODE, `(${process.env.MPESA_SHORTCODE.length} chars)`);
-  console.log('   Passkey length:', process.env.MPESA_PASSKEY.length, 'chars');
-  console.log('   Consumer Key length:', process.env.MPESA_CONSUMER_KEY.length, 'chars');
-  console.log('   Consumer Secret length:', process.env.MPESA_CONSUMER_SECRET.length, 'chars');
+  const mpesa = getMpesaConfig();
+  const missing = validateMpesaConfig(mpesa);
 
-  // 2. Test access token
+  console.log('1. CREDENTIALS FORMAT CHECK:');
+  console.log('   Environment:', mpesa.environment);
+  console.log('   Shortcode:', mpesa.shortcode, `(${mpesa.shortcode.length} chars)`);
+  console.log('   Passkey length:', mpesa.passkey.length, 'chars');
+  console.log('   Consumer Key length:', mpesa.consumerKey.length, 'chars');
+  console.log('   Consumer Secret length:', mpesa.consumerSecret.length, 'chars');
+  if (missing.length) {
+    console.log('   ❌ Missing:', missing.join(', '));
+    return;
+  }
+
   console.log('\n2. TESTING ACCESS TOKEN:');
   try {
-    const key = process.env.MPESA_CONSUMER_KEY;
-    const secret = process.env.MPESA_CONSUMER_SECRET;
-    const auth = Buffer.from(`${key}:${secret}`).toString('base64');
+    const auth = Buffer.from(`${mpesa.consumerKey}:${mpesa.consumerSecret}`).toString('base64');
+    const mpesaBaseUrl = getMpesaBaseUrl(mpesa.environment);
 
     const tokenResponse = await axios.get(
-      'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials',
+      `${mpesaBaseUrl}/oauth/v1/generate?grant_type=client_credentials`,
       {
         headers: {
-          'Authorization': `Basic ${auth}`
+          Authorization: `Basic ${auth}`
         }
       }
     );
 
     console.log('   ✅ Access token obtained successfully');
     console.log('   Token (first 20 chars):', tokenResponse.data.access_token.substring(0, 20) + '...');
-    
-    // 3. Generate password
-    console.log('\n3. PASSWORD GENERATION:');
-    const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14);
-    const businessShortCode = process.env.MPESA_SHORTCODE;
-    const passkey = process.env.MPESA_PASSKEY;
-    const passwordString = businessShortCode + passkey + timestamp;
-    const password = Buffer.from(passwordString).toString('base64');
+
+    console.log('\n3. PASSWORD GENERATION (Africa/Nairobi timestamp):');
+    const timestamp = getMpesaTimestamp();
+    const password = buildStkPassword(mpesa.shortcode, mpesa.passkey, timestamp);
 
     console.log('   Timestamp:', timestamp);
-    console.log('   Password string length:', passwordString.length);
     console.log('   Base64 password (first 20 chars):', password.substring(0, 20) + '...');
 
-    // 4. Test STK Push request
-    console.log('\n4. TESTING STK PUSH REQUEST:');
+    console.log('\n4. TESTING STK PUSH REQUEST (sandbox test phone 254708374149):');
+    const testPhone = '254708374149';
     const stkPushData = {
-      BusinessShortCode: businessShortCode,
+      BusinessShortCode: mpesa.shortcode,
       Password: password,
       Timestamp: timestamp,
       TransactionType: 'CustomerPayBillOnline',
       Amount: 1,
-      PartyA: '254791615005',
-      PartyB: businessShortCode,
-      PhoneNumber: '254791615005',
-      CallBackURL: process.env.BACKEND_URL + '/api/mpesa/callback',
+      PartyA: testPhone,
+      PartyB: mpesa.shortcode,
+      PhoneNumber: testPhone,
+      CallBackURL: mpesa.backendUrl + '/api/mpesa/callback',
       AccountReference: 'TEST-001',
       TransactionDesc: 'Test payment'
     };
@@ -66,7 +73,7 @@ async function troubleshootMpesa() {
     console.log('   - CallBackURL:', stkPushData.CallBackURL);
 
     const stkResponse = await axios.post(
-      'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest',
+      `${mpesaBaseUrl}/mpesa/stkpush/v1/processrequest`,
       stkPushData,
       {
         headers: {

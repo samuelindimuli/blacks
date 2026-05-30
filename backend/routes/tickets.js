@@ -1,25 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Ticket = require('../models/Ticket');
+const { requireAuth } = require('../middleware/auth');
 
-// Get ticket details
-router.get('/:ticketId', async (req, res) => {
-  try {
-    const { ticketId } = req.params;
-    const ticket = await Ticket.getById(ticketId);
-
-    if (!ticket) {
-      return res.status(404).json({ error: 'Ticket not found' });
-    }
-
-    res.json(ticket);
-  } catch (error) {
-    console.error('Error fetching ticket:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Get tickets by order
 router.get('/order/:orderId', async (req, res) => {
   try {
     const { orderId } = req.params;
@@ -31,8 +14,29 @@ router.get('/order/:orderId', async (req, res) => {
   }
 });
 
-// Get tickets by event
-router.get('/event/:eventId', async (req, res) => {
+router.get('/event/:eventId/unused', requireAuth, async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const tickets = await Ticket.getUnused(eventId);
+    res.json(tickets);
+  } catch (error) {
+    console.error('Error fetching unused tickets:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/event/:eventId/used', requireAuth, async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const tickets = await Ticket.getUsed(eventId);
+    res.json(tickets);
+  } catch (error) {
+    console.error('Error fetching used tickets:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/event/:eventId', requireAuth, async (req, res) => {
   try {
     const { eventId } = req.params;
     const tickets = await Ticket.getByEvent(eventId);
@@ -43,11 +47,10 @@ router.get('/event/:eventId', async (req, res) => {
   }
 });
 
-// Mark ticket as used (scan QR code)
-router.post('/:ticketId/use', async (req, res) => {
+router.post('/:ticketId/use', requireAuth, async (req, res) => {
   try {
     const { ticketId } = req.params;
-    
+
     const ticket = await Ticket.getById(ticketId);
     if (!ticket) {
       return res.status(404).json({ error: 'Ticket not found' });
@@ -70,26 +73,18 @@ router.post('/:ticketId/use', async (req, res) => {
   }
 });
 
-// Get unused tickets by event
-router.get('/event/:eventId/unused', async (req, res) => {
+router.get('/:ticketId', async (req, res) => {
   try {
-    const { eventId } = req.params;
-    const tickets = await Ticket.getUnused(eventId);
-    res.json(tickets);
-  } catch (error) {
-    console.error('Error fetching unused tickets:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
+    const { ticketId } = req.params;
+    const ticket = await Ticket.getById(ticketId);
 
-// Get used tickets by event
-router.get('/event/:eventId/used', async (req, res) => {
-  try {
-    const { eventId } = req.params;
-    const tickets = await Ticket.getUsed(eventId);
-    res.json(tickets);
+    if (!ticket) {
+      return res.status(404).json({ error: 'Ticket not found' });
+    }
+
+    res.json(ticket);
   } catch (error) {
-    console.error('Error fetching used tickets:', error);
+    console.error('Error fetching ticket:', error);
     res.status(500).json({ error: error.message });
   }
 });

@@ -43,20 +43,20 @@ npm install
 Copy `.env.example` to `.env` and fill in your M-Pesa credentials:
 
 ```bash
-cp backend/.env.example backend/.env
+cp .env.example .env
 ```
 
-Edit `backend/.env`:
+Edit `.env`:
 ```
-PORT=5000
-MPESA_CONSUMER_KEY=242IituE43wh0zLtIOUofGisLLDWC9TIpZXtFkdaCw5RLrKz
-MPESA_CONSUMER_SECRET=3jTDarilfUVxpKGtZkprwNfCR7ye2GhCKxhjI1acnlAvNCUYi8D8xZu7mANwG83l
+PORT=3000
+BACKEND_URL=https://your-ngrok-url.ngrok.io
+MPESA_CONSUMER_KEY=your_consumer_key_here
+MPESA_CONSUMER_SECRET=your_consumer_secret_here
 MPESA_SHORTCODE=174379
-MPESA_PASSKEY=bfb279f9aa9bdbcf158e97dd1a503b6e72ada1ed2c9191c5a88346309dff624b
-MPESA_PHONE=0791615005
+MPESA_PASSKEY=your_passkey_here
 MPESA_ENVIRONMENT=sandbox
 ADMIN_TOKEN=enjoyment-admin-token
-FRONTEND_URL=http://localhost:3000
+FRONTEND_URL=http://localhost:3000,http://127.0.0.1:5500
 ```
 
 **Get M-Pesa Credentials:**
@@ -71,7 +71,7 @@ npm run server    # Production
 npm run dev       # Development (with auto-reload)
 ```
 
-The server will run on `http://localhost:5000`
+The server will run on `http://localhost:3000`
 
 ## 📡 API Endpoints
 
@@ -281,7 +281,7 @@ Revenue: 10,000 KES
 
 - Use real M-Pesa credentials in production (not sandbox)
 - Store `.env` file in `.gitignore` (never commit)
-- Add admin authentication middleware
+- Admin/scanner/analytics routes require the `x-admin-token` header (matches `ADMIN_TOKEN` in `.env`)
 - Validate all phone numbers
 - Use HTTPS in production
 - Rate limit the M-Pesa endpoints
@@ -298,7 +298,7 @@ Revenue: 10,000 KES
 
 1. Create an order:
 ```bash
-curl -X POST http://localhost:5000/api/orders/create \
+curl -X POST http://localhost:3000/api/orders/create \
   -H "Content-Type: application/json" \
   -d '{
     "eventId": "event-1",
@@ -311,7 +311,7 @@ curl -X POST http://localhost:5000/api/orders/create \
 
 2. Initiate payment:
 ```bash
-curl -X POST http://localhost:5000/api/mpesa/stk-push \
+curl -X POST http://localhost:3000/api/mpesa/stk-push \
   -H "Content-Type: application/json" \
   -d '{
     "orderId": "ORD-xxxx",
@@ -322,7 +322,7 @@ curl -X POST http://localhost:5000/api/mpesa/stk-push \
 
 3. Check payment status:
 ```bash
-curl http://localhost:5000/api/mpesa/status/ORD-xxxx
+curl http://localhost:3000/api/mpesa/status/ORD-xxxx
 ```
 
 ## 📚 Additional Resources
