@@ -76,9 +76,14 @@
         <p class="text-gray-600 max-w-2xl mx-auto">Use the token in the URL to access this page. Uploaded items will appear in the public content hub.</p>
       </div>
 
-      <div id="unauthorizedMessage" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-6 rounded-custom mb-8 hidden">
+      <div id="unauthorizedMessage" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-6 rounded-custom mb-8">
         <h2 class="font-semibold text-xl mb-2">Unauthorized</h2>
-        <p>The admin token is missing or invalid. Access this page using <code>admin.html?token=enjoyment-admin-token</code>.</p>
+        <p class="mb-4">Enter the admin token below or open this page with <code id="adminAccessLink">admin.html?token=enjoyment-admin-token</code>.</p>
+        <form id="adminLoginForm" class="flex flex-col sm:flex-row gap-3 max-w-xl">
+          <input type="password" id="adminTokenInput" placeholder="Admin token" autocomplete="off"
+            class="flex-1 px-4 py-3 border border-yellow-400 rounded-custom focus:outline-none focus:border-primary">
+          <button type="submit" class="btn btn-primary">Unlock Admin</button>
+        </form>
       </div>
 
       <div id="adminTools" class="space-y-10 hidden">
@@ -316,16 +321,56 @@
   </main>
 
   <script>
-    const ADMIN_TOKEN = window.EC_CONFIG.adminToken;
-    const STORAGE_KEY = window.EC_CONFIG.storageKey;
-    const EVENTS_KEY = window.EC_CONFIG.eventsKey;
-    const MERCH_KEY = window.EC_CONFIG.merchKey;
-    const PURCHASES_KEY = window.EC_CONFIG.purchasesKey;
-    const ANALYTICS_KEY = window.EC_CONFIG.analyticsKey;
-    const urlToken = new URLSearchParams(window.location.search).get('token');
+    const EC = window.EC_CONFIG || {};
+    const ADMIN_TOKEN = EC.adminToken || 'enjoyment-admin-token';
+    const STORAGE_KEY = EC.storageKey || 'ec_content_items';
+    const EVENTS_KEY = EC.eventsKey || 'ec_events';
+    const MERCH_KEY = EC.merchKey || 'ec_merchandise';
+    const PURCHASES_KEY = EC.purchasesKey || 'ec_purchases';
+    const ANALYTICS_KEY = EC.analyticsKey || 'ec_analytics';
+    const ADMIN_SESSION_KEY = 'ec_admin_authenticated';
+
+    function normalizeToken(value) {
+      if (value == null) return '';
+      const trimmed = String(value).trim().replace(/^['"]|['"]$/g, '');
+      try {
+        return decodeURIComponent(trimmed).trim();
+      } catch (error) {
+        return trimmed;
+      }
+    }
+
+    function getTokenFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const fromQuery = params.get('token') || params.get('admin_token') || params.get('access_token');
+      if (fromQuery) return normalizeToken(fromQuery);
+
+      const hash = window.location.hash.replace(/^#/, '');
+      if (!hash) return '';
+      if (hash.includes('=')) {
+        const hashParams = new URLSearchParams(hash);
+        return normalizeToken(hashParams.get('token') || hashParams.get('admin_token'));
+      }
+      return normalizeToken(hash);
+    }
+
+    function isAdminAuthorized(providedToken) {
+      const expected = normalizeToken(ADMIN_TOKEN);
+      const candidate = normalizeToken(providedToken || getTokenFromUrl());
+
+      if (candidate && candidate === expected) {
+        sessionStorage.setItem(ADMIN_SESSION_KEY, '1');
+        return true;
+      }
+      const isSessionAuth = sessionStorage.getItem(ADMIN_SESSION_KEY) === '1';
+      return isSessionAuth;
+    }
+
     const adminTools = document.getElementById('adminTools');
     const unauthorizedMessage = document.getElementById('unauthorizedMessage');
-    const unauthorizedCode = document.querySelector('#unauthorizedMessage code');
+    const adminAccessLink = document.getElementById('adminAccessLink');
+    const adminLoginForm = document.getElementById('adminLoginForm');
+    const adminTokenInput = document.getElementById('adminTokenInput');
 
     // Content
     const uploadList = document.getElementById('uploadList');
@@ -355,9 +400,9 @@
     const ticketPurchasesList = document.getElementById('ticketPurchasesList');
     const merchPurchasesList = document.getElementById('merchPurchasesList');
 
-    const defaultItems = window.EC_CONFIG.defaultItems;
-    const defaultEvents = window.EC_CONFIG.defaultEvents;
-    const defaultMerch = window.EC_CONFIG.defaultMerch;
+    const defaultItems = EC.defaultItems || [];
+    const defaultEvents = EC.defaultEvents || [];
+    const defaultMerch = EC.defaultMerch || [];
 
     // Tab switching
     const tabButtons = document.querySelectorAll('.tab-btn');
@@ -611,23 +656,46 @@
     }
 
     // Event listeners
-    function initAdmin() {
-      if (unauthorizedCode) {
-        unauthorizedCode.textContent = `admin.html?token=${ADMIN_TOKEN}`;
-      }
-      if (urlToken !== ADMIN_TOKEN) {
-        unauthorizedMessage.classList.remove('hidden');
-        adminTools.classList.add('hidden');
-        return;
-      }
+    function showUnauthorized() {
+      unauthorizedMessage.classList.remove('hidden');
+      adminTools.classList.add('hidden');
+    }
+
+    function showAdminPanel() {
       unauthorizedMessage.classList.add('hidden');
       adminTools.classList.remove('hidden');
-
-      // Initialize all sections
       renderUploads();
       renderEvents();
       renderMerch();
       updateAnalyticsDisplay();
+    }
+
+    function initAdmin(providedToken) {
+      const accessUrl = `${window.location.pathname.split('/').pop() || 'admin.html'}?token=${encodeURIComponent(ADMIN_TOKEN)}`;
+      if (adminAccessLink) {
+        adminAccessLink.textContent = accessUrl;
+      }
+
+      if (isAdminAuthorized(providedToken)) {
+        showAdminPanel();
+        return true;
+      }
+
+      sessionStorage.removeItem(ADMIN_SESSION_KEY);
+      showUnauthorized();
+      return false;
+    }
+
+    if (adminLoginForm && adminTokenInput) {
+      adminLoginForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        if (initAdmin(adminTokenInput.value)) {
+          const cleanUrl = `${window.location.pathname}?token=${encodeURIComponent(ADMIN_TOKEN)}`;
+          window.history.replaceState({}, '', cleanUrl);
+        } else {
+          alert('Invalid admin token. Use: enjoyment-admin-token');
+        }
+      });
     }
 
     // Content form handlers
@@ -772,12 +840,13 @@
       });
     }
 
-    // Initialize analytics dashboard
-    const analyticsDashboard = new TicketAnalyticsDashboard();
+  
 
     document.addEventListener('DOMContentLoaded', () => {
-      initAdmin();
-      initializeAnalyticsEvents();
+      const authorized = initAdmin();
+      if (authorized) {
+        initializeAnalyticsEvents();
+      }
     });
   </script>
 </body>

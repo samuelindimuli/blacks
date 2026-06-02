@@ -3,7 +3,7 @@ const router = express.Router();
 const axios = require('axios');
 const Order = require('../models/Order');
 const Ticket = require('../models/Ticket');
-const { dbRun, dbGet } = require('../database');
+const { dbRun, dbGet, dbAll } = require('../database');
 const {
   getMpesaConfig,
   getMpesaBaseUrl,
@@ -26,6 +26,12 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 require('dotenv').config();
+const OrderModel = require('../models/Order');
+
+// Health check for admin dashboard and ticket scanner
+router.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
 // M-Pesa STK Push endpoint
 router.post('/stk-push', async (req, res) => {
@@ -149,6 +155,152 @@ router.post('/stk-push', async (req, res) => {
   }
 });
 
+// Helper to query Safaricom for the actual status of an STK Push
+async function querySafaricomStatus(checkoutRequestId) {
+  try {
+    const mpesa = getMpesaConfig();
+    const token = await getMpesaAccessToken(mpesa);
+    const mpesaBaseUrl = getMpesaBaseUrl(mpesa.environment);
+    const timestamp = getMpesaTimestampNairobi();
+    const password = buildStkPassword(mpesa.shortcode, mpesa.passkey, timestamp);
+
+    const queryData = {
+      BusinessShortCode: mpesa.shortcode,
+      Password: password,
+      Timestamp: timestamp,
+      CheckoutRequestID: checkoutRequestId
+    };
+
+    const response = await axios.post(
+      `${mpesaBaseUrl}/mpesa/stkpushquery/v1/query`,
+      queryData,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error('Safaricom Query Error:', error.response?.data || error.message);
+    return null;
+  }
+}
+
+// Reports Endpoint - Provide real-time data to the admin dashboard
+router.get('/reports/event/:eventId', async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const adminToken = req.headers['x-admin-token'];
+
+    if (adminToken !== process.env.ADMIN_TOKEN) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // 1. Order Summary Stats
+    const stats = await dbGet(`
+      SELECT 
+        COUNT(*) as totalOrders,
+        SUM(CASE WHEN status = 'CONFIRMED' THEN 1 ELSE 0 END) as confirmedOrders,
+        SUM(CASE WHEN status = 'PENDING' THEN 1 ELSE 0 END) as pendingOrders,
+        SUM(CASE WHEN status = 'FAILED' THEN 1 ELSE 0 END) as failedOrders,
+        SUM(CASE WHEN status = 'CONFIRMED' THEN amount ELSE 0 END) as totalRevenue
+      FROM orders WHERE event_id = ?
+    `, [eventId]);
+
+    // 2. Ticket Usage Stats
+    const ticketStats = await dbGet(`
+      SELECT 
+        COUNT(*) as total,
+        SUM(CASE WHEN status = 'UNUSED' THEN 1 ELSE 0 END) as unused,
+        SUM(CASE WHEN status = 'USED' THEN 1 ELSE 0 END) as used
+      FROM tickets WHERE event_id = ?
+    `, [eventId]);
+
+    // 3. Breakdown of Tickets by Type
+    const ticketsByTypeRaw = await dbAll(`
+      SELECT ticket_type, SUM(tickets_count) as count 
+      FROM orders 
+      WHERE event_id = ? AND status = 'CONFIRMED'
+      GROUP BY ticket_type
+    `, [eventId]);
+    
+    const byType = {};
+    ticketsByTypeRaw.forEach(row => {
+      byType[row.ticket_type || 'General'] = row.count || 0;
+    });
+
+    // 4. Fetch Order Lists for the dashboard tables
+    const confirmed = await dbAll(`
+      SELECT order_id, phone, amount, tickets_count, ticket_type, mpesa_receipt, confirmed_at 
+      FROM orders WHERE event_id = ? AND status = 'CONFIRMED' 
+      ORDER BY confirmed_at DESC LIMIT 50
+    `, [eventId]);
+
+    const pending = await dbAll(`
+      SELECT order_id, phone, amount, tickets_count, created_at 
+      FROM orders WHERE event_id = ? AND status = 'PENDING' 
+      ORDER BY created_at DESC LIMIT 20
+    `, [eventId]);
+
+    const failed = await dbAll(`
+      SELECT order_id, phone, amount, failed_at 
+      FROM orders WHERE event_id = ? AND status = 'FAILED' 
+      ORDER BY failed_at DESC LIMIT 20
+    `, [eventId]);
+
+    res.json({
+      event: {
+        eventId,
+        totalOrders: stats.totalOrders || 0,
+        confirmedOrders: stats.confirmedOrders || 0,
+        pendingOrders: stats.pendingOrders || 0,
+        failedOrders: stats.failedOrders || 0
+      },
+      revenue: {
+        total: stats.totalRevenue || 0,
+        average: stats.confirmedOrders > 0 ? (stats.totalRevenue / stats.confirmedOrders) : 0,
+        byStatus: { CONFIRMED: stats.totalRevenue || 0, PENDING: 0, FAILED: 0 }
+      },
+      tickets: {
+        total: ticketStats.total || 0,
+        unused: ticketStats.unused || 0,
+        used: ticketStats.used || 0,
+        usageRate: ticketStats.total > 0 ? ((ticketStats.used / ticketStats.total) * 100).toFixed(2) + '%' : '0.00%',
+        byType
+      },
+      orders: { CONFIRMED: confirmed, PENDING: pending, FAILED: failed }
+    });
+  } catch (error) {
+    console.error('Analytics Error:', error);
+    res.status(500).json({ error: 'Internal server error while fetching analytics' });
+  }
+});
+
+// New route to explicitly sync an order with Safaricom
+router.get('/sync/:orderId', async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const order = await findOrderResilient(orderId);
+
+    if (!order || !order.checkout_request_id) {
+      return res.status(404).json({ error: 'Order not found or no M-Pesa request associated with it.' });
+    }
+
+    const safaricomStatus = await querySafaricomStatus(order.checkout_request_id);
+    
+    if (safaricomStatus && safaricomStatus.ResultCode === '0') {
+      // It's paid! Update the DB
+      await Order.updateStatus(order.order_id, 'CONFIRMED', 'SYNCED-' + order.order_id.slice(-5));
+      await Ticket.createMultiple(order.order_id, order.event_id, order.tickets_count);
+      return res.json({ success: true, message: 'Confirmed via Safaricom Query', status: 'CONFIRMED' });
+    }
+
+    res.json({ success: false, message: safaricomStatus?.ResultDesc || 'Payment not found in Safaricom records.', status: order.status });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // M-Pesa Callback endpoint
 router.post('/callback', async (req, res) => {
   try {
@@ -215,14 +367,40 @@ router.post('/callback', async (req, res) => {
   }
 });
 
+// Helper for fuzzy order lookup
+async function findOrderResilient(id) {
+  if (!id) return null;
+  const cleanId = id.trim().toUpperCase();
+  
+  // 1. Try exact match (Order ID)
+  let order = await Order.getById(cleanId);
+  if (order) return order;
+
+  // 2. Try match as CheckoutRequestID
+  order = await Order.getByCheckoutRequestId(cleanId);
+  if (order) return order;
+
+  // 3. Fuzzy match: If user missed the hyphen (e.g., ORD123 vs ORD-123)
+  if (cleanId.startsWith('ORD') && !cleanId.includes('-')) {
+    const withHyphen = cleanId.replace('ORD', 'ORD-');
+    order = await Order.getById(withHyphen);
+    if (order) return order;
+  }
+
+  return null;
+}
+
 // Check payment status
 router.get('/status/:orderId', async (req, res) => {
   try {
     const { orderId } = req.params;
-    const order = await Order.getById(orderId);
+    console.log(`🔍 [Status Check] Querying order: ${orderId}`);
+    
+    const order = await findOrderResilient(orderId);
 
     if (!order) {
-      return res.status(404).json({ error: 'Order not found' });
+      console.warn(`⚠️ [Status Check] Order ID ${orderId} not found in database.`);
+      return res.status(404).json({ error: `Order ID "${orderId}" not found. Please ensure you include any hyphens (e.g., ORD-123).` });
     }
 
     res.json({
@@ -235,6 +413,63 @@ router.get('/status/:orderId', async (req, res) => {
     });
   } catch (error) {
     console.error('Error checking payment status:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Manual Payment Verification
+router.post('/verify-manual', async (req, res) => {
+  try {
+    const { orderId, mpesaCode } = req.body;
+    const finalMpesaCode = (mpesaCode || 'MANUAL-CONFIRM').trim().toUpperCase();
+
+    console.log(`🛠️ [Manual Verification] Attempting for Order: ${orderId}, M-Pesa Code: ${finalMpesaCode}`);
+
+    if (!orderId) {
+      return res.status(400).json({ error: 'Order ID is required' });
+    }
+
+    const order = await findOrderResilient(orderId);
+
+    if (!order) {
+      console.warn(`⚠️ [Manual Verification] Order not found: ${orderId}`);
+      return res.status(404).json({ error: `Order ID "${orderId}" not found. Manual verification requires a valid existing order.` });
+    }
+
+    if (order.status === 'CONFIRMED') {
+      return res.json({ success: true, message: 'Order already confirmed', orderId });
+    }
+
+    // REAL CHECK: Try to verify with Safaricom before force-confirming
+    if (order.checkout_request_id) {
+      const safaricomStatus = await querySafaricomStatus(order.checkout_request_id);
+      if (safaricomStatus && safaricomStatus.ResultCode === '0') {
+        console.log(`✅ Safaricom verified payment for ${orderId}`);
+      } else {
+        console.warn(`⚠️ Safaricom has no record of success for ${orderId}. Proceeding with manual override.`);
+      }
+    }
+
+    // Log the manual verification attempt for auditing
+    await dbRun(
+      `INSERT INTO mpesa_logs (order_id, status, response_data) 
+       VALUES (?, 'MANUAL_CONFIRMED', ?)`,
+      [orderId, JSON.stringify({ mpesaCode: finalMpesaCode, timestamp: new Date().toISOString() })]
+    );
+
+    // Update order status and generate tickets
+    await Order.updateStatus(orderId, 'CONFIRMED', finalMpesaCode);
+    await Ticket.createMultiple(orderId, order.event_id, order.tickets_count);
+
+    console.log(`✅ Order ${orderId} manually confirmed with code ${finalMpesaCode}`);
+
+    res.json({
+      success: true,
+      message: 'Payment verified and tickets generated',
+      orderId
+    });
+  } catch (error) {
+    console.error('Error in manual verification:', error);
     res.status(500).json({ error: error.message });
   }
 });

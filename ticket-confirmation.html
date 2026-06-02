@@ -132,8 +132,12 @@
       try {
         // Fetch order details with tickets
         const response = await fetch(`${API_BASE}/orders/${orderId}`);
-        if (!response.ok) throw new Error('Order not found');
+        const contentType = response.headers.get('content-type');
         
+        if (!response.ok || !contentType || !contentType.includes('application/json')) {
+          throw new Error(`Could not load order details (Status: ${response.status})`);
+        }
+
         const order = await response.json();
 
         if (!order.tickets || order.tickets.length === 0) {

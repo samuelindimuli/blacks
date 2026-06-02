@@ -31,6 +31,7 @@
     "express": "^4.18.2",
     "postcss": "^8.5.3",
     "qrcode": "^1.5.3",
+    "quokka-treasure-chest": "^1.0.3",
     "sqlite3": "^6.0.1",
     "tailwindcss": "^4.1.7"
   },

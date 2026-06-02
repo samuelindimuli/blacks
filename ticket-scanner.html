@@ -321,7 +321,7 @@
     // Check backend connectivity
     async function checkBackend() {
       try {
-        const response = await fetch(`${API_BASE.replace('/api', '')}/api/health`);
+        const response = await fetch(`${API_BASE}/mpesa/health`);
         if (!response.ok) {
           alert('⚠️ Backend server is offline. Please start it with: npm run dev');
         }

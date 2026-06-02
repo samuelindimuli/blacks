@@ -91,6 +91,25 @@
           <button id="checkoutBtn" class="btn btn-primary">Proceed to Checkout</button>
         </div>
       </div>
+
+      <!-- Manual Confirmation Section -->
+      <div class="mt-12 bg-white p-6 rounded-custom shadow-md border border-gray-100" id="manualConfirmSection">
+        <h2 class="text-2xl font-bold mb-4 text-secondary">Manual Payment Verification</h2>
+        <p class="text-sm text-gray-600 mb-6">If you have already paid but were not redirected, please enter your details below to generate your ticket.</p>
+        <form id="manualConfirmForm" class="space-y-4">
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <label class="text-xs font-semibold uppercase text-gray-500">Order ID</label>
+              <input type="text" id="manualOrderId" placeholder="e.g. ORD-172..." required class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary">
+            </div>
+            <div class="space-y-2">
+              <label class="text-xs font-semibold uppercase text-gray-500">M-Pesa Transaction Code</label>
+              <input type="text" id="manualMpesaCode" placeholder="Optional (e.g. SGR8...)" class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary">
+            </div>
+          </div>
+          <button type="submit" id="manualVerifyBtn" class="btn btn-outline w-full py-4">Verify & Confirm Payment</button>
+        </form>
+      </div>
     </div>
   </section>
   <script src="config.js"></script>
@@ -274,6 +293,12 @@
         const orderData = await createOrderResponse.json();
         const orderId = orderData.orderId;
 
+        // Show the Order ID to the user immediately
+        const orderDisplay = document.createElement('div');
+        orderDisplay.className = "bg-blue-100 p-4 rounded mb-4 text-center border border-blue-200";
+        orderDisplay.innerHTML = `<p class='text-sm text-blue-800'>Your Order ID: <strong class='font-mono'>${orderId}</strong></p><p class='text-xs text-blue-600 mt-1'>Save this in case you need to verify manually.</p>`;
+        document.getElementById('cartSection').prepend(orderDisplay);
+
         checkoutBtn.textContent = 'Awaiting payment...';
 
         const stkResponse = await fetch(`${API_BASE}/mpesa/stk-push`, {
@@ -286,14 +311,16 @@
           })
         });
 
-        const stkData = await stkResponse.json();
-
         if (!stkResponse.ok) {
-          const message = stkData.hint || stkData.details || stkData.error || 'Failed to initiate payment';
-          throw new Error(message);
+          const contentType = stkResponse.headers.get('content-type');
+          const errorDetail = contentType && contentType.includes('application/json') 
+            ? (await stkResponse.json()).error 
+            : `Server error (${stkResponse.status})`;
+          throw new Error(errorDetail || 'Failed to initiate payment');
         }
 
-        alert('✅ Payment prompt sent! Complete the payment on your phone.');
+        // Update UI to show we are waiting for confirmation
+        checkoutBtn.textContent = 'Waiting for M-Pesa...';
 
         const paymentResult = await pollPaymentStatus(orderId);
 
@@ -309,11 +336,14 @@
           });
           localStorage.setItem(PURCHASES_KEY, JSON.stringify(purchases));
 
+          // Clear cart and redirect
           cart = [];
           updateCart();
+          console.log('Redirecting to confirmation for Order:', orderId);
           window.location.href = `ticket-confirmation.html?orderId=${orderId}&phone=${phone}`;
         } else if (paymentResult.status === 'FAILED') {
-          throw new Error('Payment was cancelled or failed. Please try again.');
+          const failMsg = paymentResult.message || 'Payment was cancelled or failed. Please try again.';
+          throw new Error(failMsg);
         } else {
           throw new Error('Payment timed out. If you completed payment, check your tickets page or contact support.');
         }
@@ -330,8 +360,10 @@
     async function pollPaymentStatus(orderId, maxAttempts = 30, intervalMs = 2000) {
       for (let attempt = 0; attempt < maxAttempts; attempt++) {
         const response = await fetch(`${API_BASE}/mpesa/status/${orderId}`);
-        if (response.ok) {
+        const contentType = response.headers.get('content-type');
+        if (response.ok && contentType && contentType.includes('application/json')) {
           const data = await response.json();
+          console.log(`Polling attempt ${attempt + 1}:`, data.status);
           if (data.status === 'CONFIRMED' || data.status === 'FAILED') {
             return data;
           }
@@ -340,6 +372,68 @@
       }
       return { status: 'TIMEOUT' };
     }
+
+    // Manual Confirmation Handler
+    document.getElementById('manualConfirmForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const orderId = document.getElementById('manualOrderId').value.trim();
+      const mpesaCode = document.getElementById('manualMpesaCode').value.trim();
+      const verifyBtn = document.getElementById('manualVerifyBtn');
+
+      if (!orderId) return;
+
+      try {
+        verifyBtn.textContent = 'Verifying with M-Pesa...';
+        verifyBtn.disabled = true;
+
+        // We first call the status endpoint to see if it's already confirmed
+        const checkResponse = await fetch(`${API_BASE}/mpesa/status/${orderId}`);
+        if (!checkResponse.ok) {
+          const contentType = checkResponse.headers.get('content-type');
+          const errorData = contentType && contentType.includes('application/json') ? await checkResponse.json() : {};
+          let msg = errorData.error || `Order not found (Status: ${checkResponse.status})`;
+          if (checkResponse.status === 404) {
+            msg += "\n\nTip: Double check if you need a hyphen (e.g. ORD-123). Also ensure you aren't using the M-Pesa Receipt code in the Order ID box.";
+          }
+          throw new Error(msg);
+        }
+        
+        const checkData = await checkResponse.json();
+
+        if (checkData.status === 'CONFIRMED') {
+          window.location.href = `ticket-confirmation.html?orderId=${orderId}`;
+          return;
+        }
+
+        // If not confirmed, we send the manual verification request
+        const response = await fetch(`${API_BASE}/mpesa/verify-manual`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId, mpesaCode })
+        });
+
+        const contentType = response.headers.get('content-type');
+        if (response.ok && contentType && contentType.includes('application/json')) {
+          const result = await response.json();
+          alert('✅ Payment verified! Redirecting to your tickets...');
+          window.location.href = `ticket-confirmation.html?orderId=${orderId}`;
+        } else {
+          const errorData = contentType && contentType.includes('application/json') ? await response.json() : null;
+          throw new Error(errorData?.error || `Verification failed (Status: ${response.status})`);
+        }
+      } catch (error) {
+        if (error.message.includes('Failed to fetch') || error.message.includes('ERR_CONNECTION_REFUSED')) {
+          console.error('Connection Error:', error);
+          alert('❌ Cannot connect to the server. Please ensure the backend is running (run "npm run dev" in your terminal).');
+        } else {
+          console.error('Manual verification error:', error);
+          alert(`❌ Error: ${error.message}`);
+        }
+      } finally {
+        verifyBtn.textContent = 'Verify & Confirm Payment';
+        verifyBtn.disabled = false;
+      }
+    });
 
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', () => {

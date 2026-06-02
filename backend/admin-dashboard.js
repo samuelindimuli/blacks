@@ -13,10 +13,12 @@ class TicketAnalyticsDashboard {
   // Check if backend is running
   async checkBackendAvailability() {
     try {
-      const response = await fetch(`${this.apiBase.replace('/api', '')}/api/health`, {
-        method: 'GET',
-        timeout: 3000
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      
+      const response = await fetch(`${this.apiBase}/mpesa/health`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      
       this.backendAvailable = response.ok;
       console.log('Backend status:', this.backendAvailable ? '✅ Online' : '❌ Offline');
     } catch (error) {
@@ -30,21 +32,17 @@ class TicketAnalyticsDashboard {
     this.currentEventId = eventId;
     
     try {
-      if (this.backendAvailable) {
-        const analytics = await this.fetchEventAnalytics(eventId);
-        this.displayAnalytics(analytics);
-      } else {
-        this.displayDemoAnalytics(eventId);
-      }
+      const analytics = await this.fetchEventAnalytics(eventId);
+      this.displayAnalytics(analytics);
     } catch (error) {
       console.error('Error rendering analytics:', error);
-      this.displayDemoAnalytics(eventId);
+      this.showError(`Failed to load real-time analytics: ${error.message}. Please check if the backend is running.`);
     }
   }
 
   // Fetch analytics data from backend
   async fetchEventAnalytics(eventId) {
-    const response = await fetch(`${this.apiBase}/analytics/event/${eventId}`, {
+    const response = await fetch(`${this.apiBase}/mpesa/reports/event/${eventId}`, {
       headers: { 'x-admin-token': this.adminToken }
     });
     if (!response.ok) throw new Error('Failed to fetch analytics');
@@ -102,8 +100,6 @@ class TicketAnalyticsDashboard {
     const {event, revenue, tickets, orders} = data;
 
     let html = `
-      ${isDemo ? '<div class="bg-yellow-50 border border-yellow-300 text-yellow-800 px-4 py-3 rounded mb-6"><strong>📊 Demo Mode:</strong> Backend server not detected. Showing sample data. Start the backend with <code class="bg-yellow-100 px-2 py-1 rounded">npm run dev</code></div>' : ''}
-      
       <div class="space-y-8">
         <!-- Orders Summary -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
