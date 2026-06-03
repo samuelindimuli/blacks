@@ -179,6 +179,13 @@ class TicketAnalyticsDashboard {
           </div>
         </div>
 
+        <!-- Danger Zone -->
+        <div class="bg-red-50 p-6 rounded-lg border border-red-200 mt-8">
+          <h3 class="text-lg font-bold text-red-800 mb-2">Danger Zone</h3>
+          <p class="text-sm text-red-600 mb-4">Warning: This will permanently delete all orders, tickets, and M-Pesa logs from the database. This action cannot be undone.</p>
+          <button onclick="analyticsDashboard.resetDatabase()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded font-semibold transition">Reset Database & Analytics</button>
+        </div>
+
         <!-- Tickets by Type -->
         <div class="bg-white p-6 rounded-lg shadow-md">
           <h3 class="text-lg font-bold mb-4">Tickets by Type</h3>
@@ -299,6 +306,33 @@ class TicketAnalyticsDashboard {
     const container = document.getElementById('analyticsContainer');
     if (container) {
       container.innerHTML = `<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">${message}</div>`;
+    }
+  }
+
+  // Reset the database (Danger Zone)
+  async resetDatabase() {
+    const password = prompt('🚨 IMPORTANT: This will permanently delete ALL sales data, tickets, and logs. Please enter the reset password to proceed:');
+    if (!password) return;
+
+    try {
+      const response = await fetch(`${this.apiBase}/mpesa/reports/reset-all`, {
+        method: 'POST',
+        headers: { 
+          'x-admin-token': this.adminToken,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ resetPassword: password })
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        alert('✅ ' + result.message);
+        location.reload();
+      } else {
+        throw new Error(result.error || 'Failed to reset database');
+      }
+    } catch (error) {
+      alert('❌ Error: ' + error.message);
     }
   }
 }

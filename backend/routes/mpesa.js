@@ -276,6 +276,34 @@ router.get('/reports/event/:eventId', async (req, res) => {
   }
 });
 
+// Reset Data Endpoint - Clear all orders and tickets for a fresh start
+router.post('/reports/reset-all', async (req, res) => {
+  try {
+    const adminToken = req.headers['x-admin-token'];
+    const { resetPassword } = req.body;
+
+    if (adminToken !== process.env.ADMIN_TOKEN) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    if (resetPassword !== (process.env.RESET_PASSWORD || 'admin-reset-123')) {
+      return res.status(403).json({ error: 'Invalid reset password.' });
+    }
+
+    console.log(`🧹 [Database Reset] Admin initiated a full clear at ${new Date().toISOString()}`);
+
+    await dbRun('DELETE FROM tickets');
+    await dbRun('DELETE FROM orders');
+    await dbRun('DELETE FROM mpesa_logs');
+    await dbRun("DELETE FROM sqlite_sequence WHERE name IN ('tickets', 'orders', 'mpesa_logs')");
+
+    res.json({ success: true, message: 'Database cleared. All counters reset. Ready for new data.' });
+  } catch (error) {
+    console.error('Reset Error:', error);
+    res.status(500).json({ error: 'Failed to reset database' });
+  }
+});
+
 // New route to explicitly sync an order with Safaricom
 router.get('/sync/:orderId', async (req, res) => {
   try {
