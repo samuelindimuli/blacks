@@ -17,7 +17,7 @@
             accent: '#FF9E00',
             dark: '#121212',
             light: '#FFFFFF',
-            gray: '#F5F5F5',
+            grayLight: '#F5F5F5',
             text: '#333333',
             textLight: '#777777',
           },
@@ -55,7 +55,7 @@
   <header class="bg-dark text-light py-5">
     <div class="container mx-auto px-5 max-w-6xl flex justify-between items-center">
       <div>
-        <a href="tail.html" class="inline-flex items-center gap-3 text-light hover:text-primary">
+        <a href="index.html" class="inline-flex items-center gap-3 text-light hover:text-primary">
           <img src="pics/white.png" alt="EnjoymentClan Logo" class="h-16"> Admin Dashboard
         </a>
       </div>
@@ -93,6 +93,7 @@
             <button id="tabContent" class="btn btn-primary tab-btn active" data-tab="content">Content</button>
             <button id="tabEvents" class="btn btn-outline tab-btn" data-tab="events">Events</button>
             <button id="tabMerch" class="btn btn-outline tab-btn" data-tab="merch">Merchandise</button>
+            <button id="tabInquiries" class="btn btn-outline tab-btn" data-tab="inquiries">Inquiries</button>
             <button id="tabAnalytics" class="btn btn-outline tab-btn" data-tab="analytics">Analytics</button>
           </div>
           <button id="clearAllData" class="btn btn-outline bg-red-50 text-red-600 border-red-400 hover:bg-red-600 hover:text-white">Clear All Data</button>
@@ -253,13 +254,30 @@
           </section>
         </div>
 
+        <!-- Inquiries Tab -->
+        <div id="inquiriesTab" class="tab-content hidden">
+          <section class="bg-white rounded-custom shadow-md p-8">
+            <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
+              <div>
+                <h2 class="text-2xl font-bold">Client Inquiries</h2>
+                <p class="text-gray-500">Review booking inquiries from potential clients.</p>
+              </div>
+              <button id="refreshInquiries" class="btn btn-outline self-start">Refresh Inquiries</button>
+            </div>
+
+            <div id="inquiriesList" class="grid gap-4">
+              <p class="text-gray-500">No inquiries yet.</p>
+            </div>
+          </section>
+        </div>
+
         <!-- Analytics Tab -->
         <div id="analyticsTab" class="tab-content hidden">
           <section class="bg-white rounded-custom shadow-md p-8 mb-8">
             <h2 class="text-2xl font-bold mb-6">Ticket Analysis</h2>
             <div class="mb-6">
               <label class="block text-sm font-medium mb-2">Select Event</label>
-              <select id="eventSelect" class="w-full md:w-64 px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+              <select id="eventSelect" class="w-full md:w-64 px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary">
                 <option value="">-- Choose an event --</option>
               </select>
             </div>

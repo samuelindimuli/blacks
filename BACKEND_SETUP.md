@@ -19,6 +19,22 @@ confirmed_at    DATETIME
 failed_at       DATETIME
 ```
 
+### Inquiries Table
+```sql
+id              INTEGER PRIMARY KEY AUTOINCREMENT
+event_type      TEXT NOT NULL
+event_date      TEXT NOT NULL
+location        TEXT NOT NULL
+guests          INTEGER NOT NULL
+requirements    TEXT
+duration        INTEGER
+budget          TEXT NOT NULL
+contact_name    TEXT NOT NULL
+contact_email   TEXT NOT NULL
+status          TEXT (PENDING/CONFIRMED/FAILED)
+created_at      DATETIME
+```
+
 ### Tickets Table
 ```sql
 id              INTEGER PRIMARY KEY

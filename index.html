@@ -17,7 +17,7 @@
             accent: '#FF9E00',
             dark: '#121212',
             light: '#FFFFFF',
-            gray: '#F5F5F5',
+            grayLight: '#F5F5F5',
             text: '#333333',
             textLight: '#777777',
           },
@@ -192,7 +192,7 @@
   <div class="container mx-auto px-5 max-w-6xl">
     <div class="flex justify-between items-center">
       <div class="brand">
-        <a href="tail.html">
+        <a href="index.html">
           <img src="pics/white.png" alt="EnjoymentClan Logo" class="h-20">
         </a>
       </div>
@@ -227,7 +227,7 @@ and long lasting memories through
 entertainment.</h2>
       <div class="hero-buttons flex flex-col sm:flex-row justify-center gap-5">
         <a href="#join" class="btn btn-primary">Join The Movement</a>
-        <a href="#about" class="btn btn-outline">BOOK US NOW</a>
+        <a href="booking-inquiry.html" target="_blank" class="btn btn-outline">BOOK US NOW</a>
       </div>
     </div>
     
@@ -258,15 +258,15 @@ entertainment.</h2>
           <p class="mb-4">EnjoymentClan is a premier entertainment collective founded in 2020. We specialize in creating immersive experiences through music, dance, and visual arts.</p>
           <p class="mb-8">Our team of talented professionals is dedicated to pushing creative boundaries and delivering exceptional entertainment for every occasion.</p>
           <div class="stats-grid grid grid-cols-3 gap-5 mt-8">
-            <div class="stat-item text-center p-5 bg-gray rounded-custom">
+            <div class="stat-item text-center p-5 bg-grayLight rounded-custom">
               <span class="stat-number block text-3xl font-bold text-primary mb-1">150+</span>
               <span class="stat-label text-sm text-textLight">Events</span>
             </div>
-            <div class="stat-item text-center p-5 bg-gray rounded-custom">
-              <span class="stat-number block text-3xl font-bold text-primary mb-1">25+</span>
+            <div class="stat-item text-center p-5 bg-grayLight rounded-custom">
+              <span class="stat-number block text-3xl font-bold text-primary mb-1">5</span>
               <span class="stat-label text-sm text-textLight">Team Members</span>
             </div>
-            <div class="stat-item text-center p-5 bg-gray rounded-custom">
+            <div class="stat-item text-center p-5 bg-grayLight rounded-custom">
               <span class="stat-number block text-3xl font-bold text-primary mb-1">10K+</span>
               <span class="stat-label text-sm text-textLight">Followers</span>
             </div>
@@ -278,7 +278,7 @@ entertainment.</h2>
   </section>
 
   <!-- Team Section -->
-  <section class="py-20 bg-gray">
+  <section class="py-20 bg-grayLight">
     <div class="container mx-auto px-5 max-w-6xl">
       <div class="section-header text-center mb-12">
         <span class="section-subtitle">Meet The Family</span>
@@ -396,7 +396,7 @@ Choreographer, content Guru and interior designer able to execute tasks and inno
       </div>
       
       <div class="section-footer text-center mt-12">
-        <a href="#" class="btn btn-primary">Book Us Now</a>
+        <a href="booking-inquiry.html" target="_blank" class="btn btn-primary">Book Us Now</a>
       </div>
     </div>
   </section>
@@ -505,17 +505,17 @@ Choreographer, content Guru and interior designer able to execute tasks and inno
         <h2 class="section-title text-light after:bg-light">Join EnjoymentClan</h2>
         <p class="mb-6">We're always looking for talented individuals to join our growing family. Whether you're a DJ, dancer, producer, or creative professional, we'd love to hear from you.</p>
         
-        <form class="join-form">
+        <form class="join-form" action="mailto:Enjoymentclan@gmail.com" method="POST" enctype="text/plain">
           <div class="form-group mb-5">
-            <input type="text" placeholder="Your Name" required class="w-full px-4 py-3 rounded-custom border border-gray-300 font-poppins transition-all duration-300 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 text-dark">
+            <input type="text" name="name" placeholder="Your Name" required class="w-full px-4 py-3 rounded-custom border border-gray-300 font-poppins transition-all duration-300 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 text-dark">
           </div>
 
           <div class="form-group mb-5">
-            <input type="email" placeholder="Email Address" required class="w-full px-4 py-3 rounded-custom border border-gray-300 font-poppins transition-all duration-300 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 text-dark">
+            <input type="email" name="email" placeholder="Email Address" required class="w-full px-4 py-3 rounded-custom border border-gray-300 font-poppins transition-all duration-300 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 text-dark">
           </div>
          
           <div class="form-group mb-5">
-            <textarea placeholder="Tell us about yourself and your experience" class="w-full px-4 py-3 rounded-custom border border-gray-300 font-poppins transition-all duration-300 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 min-h-[120px] text-dark"></textarea>
+            <textarea name="experience" placeholder="Tell us about yourself and your experience" class="w-full px-4 py-3 rounded-custom border border-gray-300 font-poppins transition-all duration-300 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 min-h-[120px] text-dark"></textarea>
           </div>
           <button type="submit" class="btn btn-primary">Submit Application</button>
         </form>
