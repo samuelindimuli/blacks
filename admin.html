@@ -93,7 +93,6 @@
             <button id="tabContent" class="btn btn-primary tab-btn active" data-tab="content">Content</button>
             <button id="tabEvents" class="btn btn-outline tab-btn" data-tab="events">Events</button>
             <button id="tabMerch" class="btn btn-outline tab-btn" data-tab="merch">Merchandise</button>
-            <button id="tabInquiries" class="btn btn-outline tab-btn" data-tab="inquiries">Inquiries</button>
             <button id="tabAnalytics" class="btn btn-outline tab-btn" data-tab="analytics">Analytics</button>
           </div>
           <button id="clearAllData" class="btn btn-outline bg-red-50 text-red-600 border-red-400 hover:bg-red-600 hover:text-white">Clear All Data</button>
@@ -251,23 +250,6 @@
           <section class="bg-white rounded-custom shadow-md p-8">
             <h2 class="text-2xl font-bold mb-6">Current Merchandise</h2>
             <div id="merchList" class="grid gap-4"></div>
-          </section>
-        </div>
-
-        <!-- Inquiries Tab -->
-        <div id="inquiriesTab" class="tab-content hidden">
-          <section class="bg-white rounded-custom shadow-md p-8">
-            <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
-              <div>
-                <h2 class="text-2xl font-bold">Client Inquiries</h2>
-                <p class="text-gray-500">Review booking inquiries from potential clients.</p>
-              </div>
-              <button id="refreshInquiries" class="btn btn-outline self-start">Refresh Inquiries</button>
-            </div>
-
-            <div id="inquiriesList" class="grid gap-4">
-              <p class="text-gray-500">No inquiries yet.</p>
-            </div>
           </section>
         </div>
 
@@ -478,6 +460,7 @@
       totalPurchasesEl.textContent = analytics.purchases;
 
       const purchases = getStoredData(PURCHASES_KEY, []);
+      const events = getStoredEvents();
       
       // Separate ticket and merchandise purchases
       const ticketPurchases = purchases.filter(p => p.type === 'Event Ticket');
@@ -491,8 +474,16 @@
       ticketPurchases.forEach(purchase => {
         // Extract event name and ticket type from item (format: "Event Title - Ticket Type")
         const parts = purchase.item.split(' - ');
-        const eventName = parts[0];
+        let eventName = parts[0];
         const ticketType = parts[1] || 'Unknown';
+
+        // If the event name is actually an ID, look up the real title
+        if (eventName.startsWith('event-')) {
+          const eventMatch = events.find(e => e.id === eventName);
+          if (eventMatch) {
+            eventName = eventMatch.title;
+          }
+        }
         
         if (!ticketsByEvent[eventName]) {
           ticketsByEvent[eventName] = {
@@ -848,7 +839,9 @@
       // Event change listener
       eventSelect.addEventListener('change', (e) => {
         if (e.target.value) {
-          analyticsDashboard.renderEventAnalytics(e.target.value);
+          const selectedOption = e.target.options[e.target.selectedIndex];
+          const eventTitle = selectedOption.text;
+          analyticsDashboard.renderEventAnalytics(e.target.value, eventTitle);
         } else {
           const container = document.getElementById('analyticsContainer');
           if (container) {
@@ -857,8 +850,6 @@
         }
       });
     }
-
-  
 
     document.addEventListener('DOMContentLoaded', () => {
       const authorized = initAdmin();

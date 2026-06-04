@@ -7,8 +7,8 @@ class TicketAnalyticsDashboard {
     this.apiBase = window.EC_CONFIG?.apiBaseUrl || 'http://localhost:3000/api';
     this.adminToken = window.EC_CONFIG?.adminToken || 'enjoyment-admin-token';
     this.currentEventId = null;
+    this.currentEventTitle = null;
     this.backendAvailable = false;
-    this.inquiries = []; // Store inquiries
     this.checkBackendAvailability();
   }
 
@@ -30,8 +30,9 @@ class TicketAnalyticsDashboard {
   }
 
   // Render analytics for selected event
-  async renderEventAnalytics(eventId) {
+  async renderEventAnalytics(eventId, eventTitle = null) {
     this.currentEventId = eventId;
+    this.currentEventTitle = eventTitle;
     
     try {
       let analytics;
@@ -105,9 +106,16 @@ class TicketAnalyticsDashboard {
   // Display analytics on dashboard
   displayAnalytics(data, isDemo = false) {
     const {event, revenue, tickets, orders} = data;
+    const displayName = this.currentEventTitle || event.eventId;
 
     let html = `
       <div class="space-y-8">
+        <!-- Event Header -->
+        <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-primary">
+          <h2 class="text-2xl font-bold text-gray-800">${displayName}</h2>
+          <p class="text-gray-500 text-xs">Internal ID: ${event.eventId}</p>
+        </div>
+
         <!-- Orders Summary -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div class="bg-blue-50 p-6 rounded-lg">
@@ -309,133 +317,12 @@ class TicketAnalyticsDashboard {
     }
   }
 
-  // --- Inquiry Management ---
-  async fetchInquiries() {
-    if (!this.backendAvailable) {
-      console.warn('Backend is offline, cannot fetch real inquiries. Displaying demo inquiries.');
-      this.inquiries = this.getDemoInquiries();
-      this.renderInquiries();
-      return;
-    }
-    try {
-      const response = await fetch(`${this.apiBase}/inquiries`, {
-        headers: { 'x-admin-token': this.adminToken }
-      });
-      if (!response.ok) {
-        throw new Error(`Failed to fetch inquiries: ${response.statusText}`);
-      }
-      const data = await response.json();
-      this.inquiries = data.inquiries;
-      this.renderInquiries();
-    } catch (error) {
-      console.error('Error fetching inquiries:', error);
-      this.showErrorInquiry('Failed to load inquiries. Please check if the backend is running.');
-    }
-  }
-
-  getDemoInquiries() {
-    return [
-      {
-        id: 1, event_type: 'Wedding', event_date: '2024-12-25', location: 'Nairobi, Safari Park Hotel',
-        guests: 300, requirements: 'Full sound system, DJ, lighting, MC', duration: 8, budget: '250,000 - 500,000',
-        contact_name: 'Jane Doe', contact_email: 'jane.doe@example.com', status: 'NEW', created_at: '2024-05-10T10:00:00Z'
-      },
-      {
-        id: 2, event_type: 'Corporate Event', event_date: '2024-11-15', location: 'Mombasa, Sarova Whitesands',
-        guests: 150, requirements: 'Background music, projector, wireless mics', duration: 4, budget: '100,000 - 250,000',
-        contact_name: 'John Smith', contact_email: 'john.smith@example.com', status: 'REVIEWED', created_at: '2024-05-08T14:30:00Z'
-      }
-    ];
-  }
-
-  renderInquiries() {
-    const inquiriesListEl = document.getElementById('inquiriesList');
-    if (!inquiriesListEl) return;
-
-    if (this.inquiries.length === 0) {
-      inquiriesListEl.innerHTML = '<p class="text-gray-500">No inquiries available yet.</p>';
-      return;
-    }
-
-    inquiriesListEl.innerHTML = this.inquiries.map(inquiry => `
-      <div class="border border-gray-200 rounded-custom p-5 bg-gray-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div class="flex-1">
-          <div class="flex items-center gap-2 mb-2">
-            <span class="text-xs uppercase tracking-widest text-primary font-semibold">${inquiry.event_type}</span>
-            <span class="text-xs text-gray-500">${new Date(inquiry.created_at).toLocaleDateString()}</span>
-          </div>
-          <h3 class="text-xl font-bold mb-1">${inquiry.contact_name} - ${inquiry.event_date}</h3>
-          <p class="text-gray-700 mb-2">${inquiry.location} (${inquiry.guests} guests)</p>
-          <p class="text-sm text-gray-600">Budget: ${inquiry.budget}</p>
-          <p class="text-sm text-gray-600 mt-1">Email: <a href="mailto:${inquiry.contact_email}" class="text-blue-600 hover:underline">${inquiry.contact_email}</a></p>
-          ${inquiry.requirements ? `<p class="text-sm text-gray-600 mt-2">Needs: ${inquiry.requirements}</p>` : ''}
-        </div>
-        <div class="flex flex-col gap-2 items-end">
-          <span class="px-3 py-1 rounded-full text-xs font-semibold ${inquiry.status === 'NEW' ? 'bg-yellow-100 text-yellow-800' : inquiry.status === 'REVIEWED' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
-            ${inquiry.status}
-          </span>
-          <button class="btn btn-outline btn-small mt-2" onclick="analyticsDashboard.markInquiryStatus(${inquiry.id}, 'REVIEWED')">Mark Reviewed</button>
-          <button class="btn btn-primary btn-small" onclick="analyticsDashboard.markInquiryStatus(${inquiry.id}, 'CONTACTED')">Mark Contacted</button>
-          <button class="btn btn-outline btn-small bg-red-50 text-red-600 border-red-400 hover:bg-red-600 hover:text-white" onclick="analyticsDashboard.deleteInquiry(${inquiry.id})">Delete</button>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  async markInquiryStatus(id, status) {
-    if (!this.backendAvailable) {
-      alert('Backend is offline. Cannot update inquiry status.');
-      return;
-    }
-    try {
-      const response = await fetch(`${this.apiBase}/inquiries/${id}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'x-admin-token': this.adminToken },
-        body: JSON.stringify({ status })
-      });
-      if (!response.ok) throw new Error('Failed to update status');
-      alert(`Inquiry ${id} marked as ${status}.`);
-      this.fetchInquiries(); // Refresh list
-    } catch (error) {
-      console.error('Error updating inquiry status:', error);
-      alert('Failed to update inquiry status.');
-    }
-  }
-
-  async deleteInquiry(id) {
-    if (!confirm(`Are you sure you want to delete inquiry ${id}?`)) return;
-    if (!this.backendAvailable) {
-      alert('Backend is offline. Cannot delete inquiry.');
-      return;
-    }
-    try {
-      const response = await fetch(`${this.apiBase}/inquiries/${id}`, {
-        method: 'DELETE',
-        headers: { 'x-admin-token': this.adminToken }
-      });
-      if (!response.ok) throw new Error('Failed to delete inquiry');
-      alert(`Inquiry ${id} deleted.`);
-      this.fetchInquiries(); // Refresh list
-    } catch (error) {
-      console.error('Error deleting inquiry:', error);
-      alert('Failed to delete inquiry.');
-    }
-  }
-
   showError(message) {
     const container = document.getElementById('analyticsContainer');
     if (container) {
       container.innerHTML = `<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">${message}</div>`;
     }
   }
-
-  showErrorInquiry(message) {
-    const container = document.getElementById('inquiriesList');
-    if (container) {
-      container.innerHTML = `<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">${message}</div>`;
-    }
-  }
-
   // Reset the database (Danger Zone)
   async resetDatabase() {
     const password = prompt('🚨 IMPORTANT: This will permanently delete ALL sales data, tickets, and logs. Please enter the reset password to proceed:');

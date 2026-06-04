@@ -196,21 +196,25 @@
         submitBtn.textContent = 'Sending...';
         submitBtn.disabled = true;
 
-        const response = await fetch('/api/inquiries', { // Assuming your backend is on the same origin or proxied
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data),
-        });
+        const subject = encodeURIComponent(`Booking Inquiry: ${data.event_type} - ${data.contact_name}`);
+        const emailBody = encodeURIComponent(
+          `New Booking Inquiry Details:\n` +
+          `--------------------------\n` +
+          `Event Type: ${data.event_type}\n` +
+          `Date: ${data.event_date}\n` +
+          `Location: ${data.location}\n` +
+          `Estimated Guests: ${data.guests}\n` +
+          `Duration: ${data.duration} hours\n` +
+          `Requirements: ${data.requirements}\n` +
+          `Budget: ${data.budget}\n` +
+          `Contact Name: ${data.contact_name}\n` +
+          `Email: ${data.contact_email}`
+        );
 
-        if (response.ok) {
-          bookingForm.reset();
-          successModal.classList.remove('hidden');
-        } else {
-          const errorData = await response.json();
-          alert(`Failed to submit inquiry: ${errorData.error || 'Unknown error'}`);
-        }
+        window.location.href = `mailto:enjoymentclan@gmail.com?subject=${subject}&body=${emailBody}`;
+
+        bookingForm.reset();
+        successModal.classList.remove('hidden');
       } catch (error) {
         console.error('Submission error:', error);
         alert('An error occurred while submitting your inquiry. Please try again later.');

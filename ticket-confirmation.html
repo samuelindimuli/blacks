@@ -164,8 +164,26 @@
       }
     }
 
+    function getStoredEvents() {
+      const EVENTS_KEY = window.EC_CONFIG?.eventsKey || 'ec_events';
+      const defaultEvents = window.EC_CONFIG?.defaultEvents || [];
+      const stored = localStorage.getItem(EVENTS_KEY);
+      if (!stored) return defaultEvents;
+      try {
+        const parsed = JSON.parse(stored);
+        return Array.isArray(parsed) ? parsed : defaultEvents;
+      } catch (e) {
+        return defaultEvents;
+      }
+    }
+
     function displayTickets(order) {
       const container = document.getElementById('ticketsContainer');
+      
+      // Map event ID to Title for a cleaner look
+      const events = getStoredEvents();
+      const eventMatch = events.find(e => e.id === order.event_id);
+      const eventTitle = eventMatch ? eventMatch.title : order.event_id;
       
       const html = `
         <div class="space-y-8">
@@ -179,7 +197,7 @@
               </div>
               <div>
                 <p class="text-gray-600 text-sm">Event</p>
-                <p class="text-xl font-bold">${order.event_id}</p>
+                <p class="text-xl font-bold">${eventTitle}</p>
               </div>
               <div>
                 <p class="text-gray-600 text-sm">Total Amount</p>
@@ -244,13 +262,18 @@
 
     function downloadAsPDF() {
       const element = document.getElementById('ticketsContainer');
+      const orderId = new URLSearchParams(window.location.search).get('orderId') || 'Ticket';
+
       const opt = {
-        margin: 10,
-        filename: `ticket-${new URLSearchParams(window.location.search).get('orderId')}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+        margin: [10, 10, 10, 10], // top, left, bottom, right
+        filename: `EnjoymentClan-Order-${orderId}.pdf`,
+        image: { type: 'jpeg', quality: 1 },
+        html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+        jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4', compressPDF: true },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       };
+
+      // Use the worker to save only the specific container, ignoring the rest of the UI
       html2pdf().set(opt).from(element).save();
     }
 
