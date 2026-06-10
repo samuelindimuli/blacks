@@ -170,9 +170,9 @@
     }
   </style>
 </head>
-<body class="font-poppins text-text">
+<body class="font-poppins text-text overflow-x-hidden">
 
-    <div class="fixed w-full h-full bg-gradient-to-l from-[#8f94fb] to-[#4e54c8] -z-50">
+    <div class="fixed w-full h-full bg-gradient-to-l from-[#8f94fb] to-[#4e54c8] -z-50 overflow-hidden">
     <ul class="circles">
       <li class="circle circle1"></li>
       <li class="circle circle2"></li>
@@ -205,6 +205,7 @@
     <li><a href="#events" class="nav-link text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">EVENTS</a></li>
     <li><a href="#merchandise" class="nav-link text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">MERCHANDISE</a></li>
     <li><a href="ticketing.html" class="nav-link text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">TICKETING</a></li>
+    <li><a href="gallery.html" class="nav-link text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">GALLERY</a></li>
     <li><a href="content.html" class="nav-link text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">CONTENT</a></li>
     <li><a href="#join" class="nav-link text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">CONTACT US</a></li>
     
@@ -298,7 +299,7 @@ entertainment.</h2>
           </div>
           <div class="team-info p-6 text-center">
             <h3 class="text-xl font-bold">Samuel Indimuli</h3>
-            <p class="team-role text-primary font-semibold mb-4">Founder</p>
+            <p class="team-role text-primary font-semibold mb-4">Founder Of The Enjoyment Clan</p>
             <p class="team-bio text-textLight text-sm">Deejay, sound engineer and web designer with valuable skills in music selection.
 Confident in succeeding complex tasks and processes within tight schedules. Tasks where I have an opportunity to solve problems brings the best out of me.</p>
           </div>
@@ -307,7 +308,7 @@ Confident in succeeding complex tasks and processes within tight schedules. Task
         <!-- Team Member 2 -->
         <div class="team-card bg-light rounded-custom overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-3 hover:shadow-md">
           <div class="team-image relative h-64 overflow-hidden">
-            <img src="pics/dancer.jpg" alt="Jane Doe" class="w-full h-full object-cover object-top transition-all duration-300 group-hover:scale-105">
+            <img src="pics/dancer.jpg" alt="Hillary Akoto" class="w-full h-full object-cover object-top transition-all duration-300 group-hover:scale-105">
             <div class="team-social absolute bottom-5 left-0 w-full flex justify-center gap-4 opacity-0 translate-y-5 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
               <a href="#" class="w-10 h-10 flex items-center justify-center bg-primary text-light rounded-full transition-all duration-300 hover:bg-dark hover:-translate-y-1"><i class="fab fa-instagram"></i></a>
               <a href="#" class="w-10 h-10 flex items-center justify-center bg-primary text-light rounded-full transition-all duration-300 hover:bg-dark hover:-translate-y-1"><i class="fab fa-tiktok"></i></a>
@@ -315,7 +316,7 @@ Confident in succeeding complex tasks and processes within tight schedules. Task
           </div>
           <div class="team-info p-6 text-center">
             <h3 class="text-xl font-bold">Hillary Akoto</h3>
-            <p class="team-role text-primary font-semibold mb-4">Founder</p>
+            <p class="team-role text-primary font-semibold mb-4">Founder Of The Enjoyment Clan</p>
             <p class="team-bio text-textLight text-sm">Marketing strategist
 Choreographer, content Guru and interior designer able to execute tasks and innovate new ideas to help suit our clients.</p>
           </div>
@@ -350,7 +351,7 @@ Choreographer, content Guru and interior designer able to execute tasks and inno
           </div>
           <div class="team-info p-6 text-center">
             <h3 class="text-xl font-bold">Kelvin Akoto</h3>
-            <p class="team-role text-primary font-semibold mb-4">Founder</p>
+            <p class="team-role text-primary font-semibold mb-4">Founder Of The Enjoyment Clan</p>
             <p class="team-bio text-textLight text-sm">Deejay and Marketing Stratergist. Identifying innovative approaches and improved solutions to business challenges both motivates and drives me. Observation, inspiration and determination are my foundation of success. Similar to The Enjoyment Clan, my goal is to remain on the cutting- edge of advancements</p>
           </div>
         </div>
@@ -389,7 +390,7 @@ Choreographer, content Guru and interior designer able to execute tasks and inno
         <a href="custom-entertainment.html" class="block">
         <div class="service-card bg-light rounded-custom p-6 shadow-sm transition-all duration-300 hover:-translate-y-3 hover:shadow-md">
           <i class="fas fa-cogs text-primary text-4xl mb-4"></i>
-          <h3 class="text-xl font-bold mb-2 text-text">Custom Entertainment Solutions</h3>
+          <h3 class="text-xl font-bold mb-2 text-text">Event Planning & Management</h3>
           <p class="text-text">Tailored entertainment packages to fit your unique event needs and vision.</p>
         </div>
         </a>
@@ -657,17 +658,24 @@ entertainment.</p>
   // Mobile nav toggle
   const mobileToggle = document.querySelector('.mobile-menu-toggle');
   const mainNav = document.querySelector('.main-nav');
+  const navList = document.querySelector('#mainNav');
+
   if (mobileToggle) {
     mobileToggle.addEventListener('click', () => {
       mainNav.classList.toggle('hidden');
       mainNav.classList.toggle('block');
       mainNav.classList.toggle('absolute');
-      mainNav.classList.toggle('top-20');
+      mainNav.classList.toggle('top-[120px]');
       mainNav.classList.toggle('left-0');
-      mainNav.classList.toggle('right-0');
       mainNav.classList.toggle('w-full');
+      mainNav.classList.toggle('bg-dark');
       mainNav.classList.toggle('p-5');
-      mainNav.classList.toggle('flex-col');
+
+      if (navList) {
+        navList.classList.toggle('flex-col');
+        navList.classList.toggle('space-y-4');
+        navList.classList.toggle('space-x-8');
+      }
     });
   }
 </script>

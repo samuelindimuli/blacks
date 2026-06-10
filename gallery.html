@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EnjoymentClan | Event Gallery</title>
+  <!-- Fonts and Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#FF5E14',
+            secondary: '#1A1A1A',
+            accent: '#FF9E00',
+            dark: '#121212',
+            light: '#FFFFFF',
+            grayLight: '#F5F5F5',
+            text: '#333333',
+            textLight: '#777777',
+          },
+          fontFamily: {
+            poppins: ['Poppins', 'sans-serif'],
+          },
+          boxShadow: {
+            sm: '0 2px 8px rgba(0,0,0,0.1)',
+            md: '0 4px 12px rgba(0,0,0,0.15)',
+            lg: '0 8px 24px rgba(0,0,0,0.2)',
+          },
+          borderRadius: {
+            custom: '8px',
+          },
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer components {
+      .btn {
+        @apply inline-block px-7 py-3 rounded-custom font-semibold uppercase tracking-wider text-sm transition-all duration-300 ease-in-out cursor-pointer text-center border-2 border-transparent;
+      }
+      .btn-primary {
+        @apply bg-primary text-light hover:bg-[#E04E00] hover:-translate-y-1 hover:shadow-md;
+      }
+      .btn-outline {
+        @apply bg-transparent text-primary border-primary hover:bg-primary hover:text-light hover:-translate-y-1 hover:shadow-md;
+      }
+      .section-title {
+        @apply relative inline-block mb-8 text-4xl font-bold;
+      }
+      .section-title:after {
+        @apply content-[''] absolute -bottom-2 left-0 w-16 h-1 bg-primary;
+      }
+      .section-subtitle {
+        @apply block text-sm uppercase tracking-widest text-primary mb-4 font-semibold;
+      }
+    }
+  </style>
+</head>
+<body class="font-poppins text-text bg-light min-h-screen overflow-x-hidden">
+
+  <!-- HEADER / TOP NAV -->
+  <header class="fixed top-0 left-0 w-full py-5 bg-dark z-50 shadow-md">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <div class="flex justify-between items-center">
+        <div class="brand">
+          <a href="index.html">
+            <img src="pics/white.png" alt="EnjoymentClan Logo" class="h-20">
+          </a>
+        </div>
+        <nav class="main-nav hidden md:block">
+          <ul class="flex items-center space-x-8">
+            <li><a href="index.html" class="nav-link text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">HOME</a></li>
+            <li><a href="about.html" class="nav-link text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">ABOUT US</a></li>
+            <li><a href="merchandise.html" class="nav-link text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">MERCHANDISE</a></li>
+            <li><a href="ticketing.html" class="nav-link text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">TICKETING</a></li>
+            <li><a href="content.html" class="nav-link text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">CONTENT</a></li>
+            <li><a href="gallery.html" class="nav-link text-primary font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">GALLERY</a></li>
+            <li><a href="contact.html" class="nav-link text-light font-medium relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full">CONTACT US</a></li>
+          </ul>
+        </nav>
+        <div class="mobile-menu-toggle md:hidden text-light text-2xl cursor-pointer">
+          <i class="fas fa-bars"></i>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- GALLERY HERO SECTION -->
+  <section class="pt-32 pb-10 bg-gradient-to-b from-primary/90 to-light text-dark text-center bg-cover bg-center">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <h1 class="text-4xl md:text-6xl font-extrabold mb-4 uppercase tracking-wider">Event Gallery</h1>
+      <p class="text-lg text-textLight">Relive the moments from our past unforgettable events!</p>
+    </div>
+  </section>
+
+  <!-- GALLERY CONTENT -->
+  <section class="py-16 bg-light">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <div id="galleryGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <!-- Images will be dynamically loaded here -->
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="bg-dark text-light pt-16 pb-8">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <div class="footer-content flex flex-col md:flex-row justify-between items-center mb-8">
+        <div class="footer-logo mb-6 md:mb-0">
+            <img src="pics/white.png" alt="EnjoymentClan Logo" class="h-32">
+        </div>
+        <div class="social-links flex gap-6">
+          <a href="#" aria-label="Facebook" class="text-2xl hover:text-primary transition-colors duration-300"><i class="fab fa-facebook"></i></a>
+          <a href="#" aria-label="Instagram" class="text-2xl hover:text-primary transition-colors duration-300"><i class="fab fa-instagram"></i></a>
+          <a href="#" aria-label="Twitter" class="text-2xl hover:text-primary transition-colors duration-300"><i class="fab fa-twitter"></i></a>
+        </div>
+      </div>
+      <p class="copyright text-center text-textLight text-sm">&copy; 2025 EnjoymentClan. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    const eventImages = [
+      { src: 'pics/poster1.jpg', alt: 'Urban Sunday Event' },
+      { src: 'pics/poster2.jpg', alt: 'Urban Sunday 2 Event' },
+      { src: 'pics/blacks.jpg', alt: 'DJ KennyBlacks Performance' },
+      { src: 'pics/dancer.jpg', alt: 'Hillary Akoto Dance Performance' },
+      { src: 'pics/Ami.jpeg', alt: 'AMI Designs Event' },
+      { src: 'pics/Nevik.jpeg', alt: 'Kelvin Akoto DJ Set' },
+      // Add more image paths here!
+      // Example: { src: 'pics/event-image-3.jpg', alt: 'Another Event Highlight' },
+    ];
+
+    function renderGallery() {
+      const galleryGrid = document.getElementById('galleryGrid');
+      if (!galleryGrid) return;
+
+      galleryGrid.innerHTML = eventImages.map(image => `
+        <div class="gallery-item bg-white rounded-lg shadow-md overflow-hidden transform transition-transform duration-300 hover:scale-105">
+          <img src="${image.src}" alt="${image.alt}" class="w-full h-64 object-cover">
+          <div class="p-4">
+            <p class="text-sm text-gray-600">${image.alt}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', renderGallery);
+  </script>
+</body>
+</html>

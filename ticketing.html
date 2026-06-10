@@ -50,7 +50,7 @@
     }
   </style>
 </head>
-<body class="font-poppins text-text bg-light">
+<body class="font-poppins text-text bg-light overflow-x-hidden">
   <header class="bg-dark text-light py-5">
     <div class="container mx-auto px-5 max-w-6xl">
       <div class="flex justify-between items-center">
@@ -357,7 +357,7 @@
       }
     });
 
-    async function pollPaymentStatus(orderId, maxAttempts = 30, intervalMs = 2000) {
+    async function pollPaymentStatus(orderId, maxAttempts = 20, intervalMs = 10000) {
       for (let attempt = 0; attempt < maxAttempts; attempt++) {
         const response = await fetch(`${API_BASE}/mpesa/status/${orderId}`);
         const contentType = response.headers.get('content-type');
