@@ -1,6 +1,6 @@
 window.EC_CONFIG = {
   adminToken: 'enjoyment-admin-token',
-  apiBaseUrl: 'https://blacks-production.up.railway.app/api',
+  apiBaseUrl: 'blacks-production.up.railway.app/api',
   storageKey: 'ec_content_items',
   eventsKey: 'ec_events',
   merchKey: 'ec_merchandise',
