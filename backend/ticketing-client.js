@@ -2,7 +2,7 @@
 
 const API_BASE = (typeof window !== 'undefined' && window.EC_CONFIG?.apiBaseUrl)
   || process.env.API_BASE_URL
-  || 'http://localhost:3000/api';
+  || 'http://blacks-production.up.railway.app';
 
 const ADMIN_TOKEN = (typeof window !== 'undefined' && window.EC_CONFIG?.adminToken)
   || process.env.ADMIN_TOKEN
