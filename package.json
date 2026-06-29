@@ -10,8 +10,7 @@
     "mpesa:test": "node troubleshoot-mpesa.js",
     "mpesa:diagnose": "node scripts/mpesa-stk-diagnose.js",
   "postinstall": "npm rebuild sqlite3"
-}
-  },
+},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/awstine/EnjoymentClan-webpage.git"
