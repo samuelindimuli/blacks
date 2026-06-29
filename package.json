@@ -8,7 +8,9 @@
     "dev": "nodemon backend/server.js",
     "start": "node backend/server.js",
     "mpesa:test": "node troubleshoot-mpesa.js",
-    "mpesa:diagnose": "node scripts/mpesa-stk-diagnose.js"
+    "mpesa:diagnose": "node scripts/mpesa-stk-diagnose.js",
+  "postinstall": "npm rebuild sqlite3"
+}
   },
   "repository": {
     "type": "git",
