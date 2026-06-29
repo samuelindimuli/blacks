@@ -1,121 +1,236 @@
-const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
-const dbPath = path.join(__dirname, 'enjoymentclan.db');
-const db = new sqlite3.Database(dbPath);
+const DATABASE_URL = process.env.DATABASE_URL;
 
-// Promisify database methods
-const dbRun = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.run(sql, params, function(err) {
-      if (err) reject(err);
-      else resolve(this);
+let db, dbRun, dbGet, dbAll;
+
+if (DATABASE_URL) {
+  // Use Postgres in production (Railway)
+  const { Pool } = require('pg');
+  const pool = new Pool({ connectionString: DATABASE_URL, ssl: { rejectUnauthorized: false } });
+
+  db = pool;
+
+  dbRun = async (sql, params = []) => {
+    const res = await pool.query(sql, params);
+    return res;
+  };
+
+  dbGet = async (sql, params = []) => {
+    const res = await pool.query(sql, params);
+    return res.rows[0];
+  };
+
+  dbAll = async (sql, params = []) => {
+    const res = await pool.query(sql, params);
+    return res.rows;
+  };
+
+  const initializeDatabase = async () => {
+    // Create Events table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS events (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT,
+        date TEXT NOT NULL,
+        location TEXT,
+        price_per_ticket REAL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Create Orders table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS orders (
+        id SERIAL PRIMARY KEY,
+        order_id TEXT UNIQUE NOT NULL,
+        checkout_request_id TEXT UNIQUE,
+        event_id TEXT NOT NULL,
+        status TEXT DEFAULT 'PENDING',
+        amount REAL NOT NULL,
+        phone TEXT NOT NULL,
+        mpesa_receipt TEXT,
+        mpesa_transaction_id TEXT,
+        tickets_count INTEGER NOT NULL,
+        ticket_type TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        confirmed_at TIMESTAMP,
+        failed_at TIMESTAMP,
+        FOREIGN KEY (event_id) REFERENCES events(id)
+      )
+    `);
+
+    // Create Tickets table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS tickets (
+        id SERIAL PRIMARY KEY,
+        ticket_id TEXT UNIQUE NOT NULL,
+        order_id TEXT NOT NULL,
+        event_id TEXT NOT NULL,
+        status TEXT DEFAULT 'UNUSED',
+        qr_code TEXT UNIQUE,
+        used_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (order_id) REFERENCES orders(order_id),
+        FOREIGN KEY (event_id) REFERENCES events(id)
+      )
+    `);
+
+    // Create M-Pesa logs
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS mpesa_logs (
+        id SERIAL PRIMARY KEY,
+        order_id TEXT,
+        checkout_request_id TEXT,
+        phone TEXT,
+        amount REAL,
+        transaction_id TEXT,
+        status TEXT,
+        response_data TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Safe migrations: add columns if missing (Postgres ignores IF NOT EXISTS for columns prior to v11; use try-catch)
+    try {
+      await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS checkout_request_id TEXT;`);
+    } catch (e) {}
+
+    try {
+      await pool.query(`ALTER TABLE mpesa_logs ADD COLUMN IF NOT EXISTS checkout_request_id TEXT;`);
+    } catch (e) {}
+
+    console.log('✅ Postgres database initialized successfully');
+  };
+
+  module.exports = {
+    db: pool,
+    dbRun,
+    dbGet,
+    dbAll,
+    initializeDatabase
+  };
+
+} else {
+  // Fall back to sqlite for local development
+  const sqlite3 = require('sqlite3').verbose();
+  const dbPath = path.join(__dirname, 'enjoymentclan.db');
+  const sqliteDb = new sqlite3.Database(dbPath);
+
+  db = sqliteDb;
+
+  // Promisify database methods
+  dbRun = (sql, params = []) => {
+    return new Promise((resolve, reject) => {
+      sqliteDb.run(sql, params, function(err) {
+        if (err) reject(err);
+        else resolve(this);
+      });
     });
-  });
-};
+  };
 
-const dbGet = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
-      if (err) reject(err);
-      else resolve(row);
+  dbGet = (sql, params = []) => {
+    return new Promise((resolve, reject) => {
+      sqliteDb.get(sql, params, (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
     });
-  });
-};
+  };
 
-const dbAll = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.all(sql, params, (err, rows) => {
-      if (err) reject(err);
-      else resolve(rows);
+  dbAll = (sql, params = []) => {
+    return new Promise((resolve, reject) => {
+      sqliteDb.all(sql, params, (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      });
     });
-  });
-};
+  };
 
-const initializeDatabase = () => {
-  // Create Events table (if not exists)
-  db.run(`
-    CREATE TABLE IF NOT EXISTS events (
-      id TEXT PRIMARY KEY,
-      title TEXT NOT NULL,
-      description TEXT,
-      date TEXT NOT NULL,
-      location TEXT,
-      price_per_ticket REAL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
+  const initializeDatabase = () => {
+    // Create Events table (if not exists)
+    sqliteDb.run(`
+      CREATE TABLE IF NOT EXISTS events (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT,
+        date TEXT NOT NULL,
+        location TEXT,
+        price_per_ticket REAL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
 
-  // Create Orders table
-  db.run(`
-    CREATE TABLE IF NOT EXISTS orders (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      order_id TEXT UNIQUE NOT NULL,
-      checkout_request_id TEXT UNIQUE, -- UPDATED: Connects the order directly to the STK push tracking token
-      event_id TEXT NOT NULL,
-      status TEXT DEFAULT 'PENDING',
-      amount REAL NOT NULL,
-      phone TEXT NOT NULL,
-      mpesa_receipt TEXT,
-      mpesa_transaction_id TEXT,
-      tickets_count INTEGER NOT NULL,
-      ticket_type TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      confirmed_at DATETIME,
-      failed_at DATETIME,
-      FOREIGN KEY (event_id) REFERENCES events(id)
-    )
-  `);
+    // Create Orders table
+    sqliteDb.run(`
+      CREATE TABLE IF NOT EXISTS orders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        order_id TEXT UNIQUE NOT NULL,
+        checkout_request_id TEXT UNIQUE, -- UPDATED: Connects the order directly to the STK push tracking token
+        event_id TEXT NOT NULL,
+        status TEXT DEFAULT 'PENDING',
+        amount REAL NOT NULL,
+        phone TEXT NOT NULL,
+        mpesa_receipt TEXT,
+        mpesa_transaction_id TEXT,
+        tickets_count INTEGER NOT NULL,
+        ticket_type TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        confirmed_at DATETIME,
+        failed_at DATETIME,
+        FOREIGN KEY (event_id) REFERENCES events(id)
+      )
+    `);
 
-  // Create Tickets table
-  db.run(`
-    CREATE TABLE IF NOT EXISTS tickets (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      ticket_id TEXT UNIQUE NOT NULL,
-      order_id TEXT NOT NULL,
-      event_id TEXT NOT NULL,
-      status TEXT DEFAULT 'UNUSED',
-      qr_code TEXT UNIQUE,
-      used_at DATETIME,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (order_id) REFERENCES orders(order_id),
-      FOREIGN KEY (event_id) REFERENCES events(id)
-    )
-  `);
+    // Create Tickets table
+    sqliteDb.run(`
+      CREATE TABLE IF NOT EXISTS tickets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ticket_id TEXT UNIQUE NOT NULL,
+        order_id TEXT NOT NULL,
+        event_id TEXT NOT NULL,
+        status TEXT DEFAULT 'UNUSED',
+        qr_code TEXT UNIQUE,
+        used_at DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (order_id) REFERENCES orders(order_id),
+        FOREIGN KEY (event_id) REFERENCES events(id)
+      )
+    `);
 
-  // Create M-Pesa Logs table for debugging
-  db.run(`
-    CREATE TABLE IF NOT EXISTS mpesa_logs (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      order_id TEXT,
-      checkout_request_id TEXT, -- UPDATED: Tracks Safaricom's transaction reference code
-      phone TEXT,
-      amount REAL,
-      transaction_id TEXT,
-      status TEXT,
-      response_data TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
+    // Create M-Pesa Logs table for debugging
+    sqliteDb.run(`
+      CREATE TABLE IF NOT EXISTS mpesa_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        order_id TEXT,
+        checkout_request_id TEXT, -- UPDATED: Tracks Safaricom's transaction reference code
+        phone TEXT,
+        amount REAL,
+        transaction_id TEXT,
+        status TEXT,
+        response_data TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
 
-  // SAFE DEVELOPMENT MIGRATION ALTERATIONS:
-  // These statements will check if your live file is missing the new columns and add them dynamically 
-  // so you don't run into 'table missing column' crashes.
-  db.run(`ALTER TABLE orders ADD COLUMN checkout_request_id TEXT;`, [], (err) => {
-    // Catch block handles hiding standard "duplicate column name" logs gracefully if it's already present
-  });
+    // SAFE DEVELOPMENT MIGRATION ALTERATIONS:
+    sqliteDb.run(`ALTER TABLE orders ADD COLUMN checkout_request_id TEXT;`, [], (err) => {
+      // Catch block handles hiding standard "duplicate column name" logs gracefully if it's already present
+    });
 
-  db.run(`ALTER TABLE mpesa_logs ADD COLUMN checkout_request_id TEXT;`, [], (err) => {
-    // Quietly catch errors if the column is already built
-  });
+    sqliteDb.run(`ALTER TABLE mpesa_logs ADD COLUMN checkout_request_id TEXT;`, [], (err) => {
+      // Quietly catch errors if the column is already built
+    });
 
-  console.log('✅ Database initialized successfully');
-};
+    console.log('✅ SQLite database initialized successfully');
+  };
 
-module.exports = {
-  db,
-  dbRun,
-  dbGet,
-  dbAll,
-  initializeDatabase
-};
+  module.exports = {
+    db: sqliteDb,
+    dbRun,
+    dbGet,
+    dbAll,
+    initializeDatabase
+  };
+}
