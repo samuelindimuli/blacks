@@ -1,6 +1,6 @@
 window.EC_CONFIG = {
   adminToken: 'enjoyment-admin-token',
-  apiBaseUrl: 'http://localhost:3000/api',
+  apiBaseUrl: 'https://blacks-production.up.railway.app/api',
   storageKey: 'ec_content_items',
   eventsKey: 'ec_events',
   merchKey: 'ec_merchandise',
@@ -30,7 +30,7 @@ window.EC_CONFIG = {
       date: '2026-05-15',
       location: 'Los Angeles, CA',
       tickets: [
-        { type: 'General', price: 25, available: 100 },
+        { type: 'General', price: 1, available: 100 },
         { type: 'VIP', price: 50, available: 50 }
       ]
     }
