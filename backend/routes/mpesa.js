@@ -66,7 +66,7 @@ router.post('/stk-push', async (req, res) => {
     console.log('✅ Access token obtained successfully');
 
     const businessShortCode = String(mpesa.shortcode);
-    const callbackUrl = `https://blacks-production.up.railway.app/api/mpesa/callback`;
+    const callbackUrl = `${mpesa.backendUrl.replace(/\/$/, '')}/api/mpesa/callback`;
     const formattedPhone = phone.startsWith('254') ? phone : '254' + phone.slice(1);
     const stkFields = formatStkFields(orderId);
 
