@@ -8,3 +8,4 @@ dist/
 build/
 .env.local
 .env.*.local
+node_modules/
