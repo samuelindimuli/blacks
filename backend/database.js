@@ -112,6 +112,10 @@ if (DATABASE_URL) {
     initializeDatabase
   };
 
+} else if (process.env.NODE_ENV === 'production') {
+  console.error('❌ Production environment requires a DATABASE_URL.');
+  console.error('   Add Railway Postgres and set DATABASE_URL, or switch to a production-ready database.');
+  process.exit(1);
 } else {
   // Fall back to sqlite for local development
   const sqlite3 = require('sqlite3').verbose();

@@ -65,6 +65,7 @@ cp .env.example .env
 Edit `.env`:
 ```
 PORT=3000
+DATABASE_URL=postgres://your_user:your_password@your_host:5432/your_database
 BACKEND_URL=https://your-ngrok-url.ngrok.io
 MPESA_CONSUMER_KEY=your_consumer_key_here
 MPESA_CONSUMER_SECRET=your_consumer_secret_here
@@ -74,6 +75,12 @@ MPESA_ENVIRONMENT=sandbox
 ADMIN_TOKEN=enjoyment-admin-token
 FRONTEND_URL=http://localhost:3000,http://127.0.0.1:5500
 ```
+
+**Railway Postgres setup:**
+1. Add the PostgreSQL plugin in the Railway dashboard.
+2. Copy the generated `DATABASE_URL` value.
+3. Add `DATABASE_URL` to Railway environment variables.
+4. Ensure `NODE_ENV=production` is set in Railway so dev-only sqlite3 is not installed.
 
 **Get M-Pesa Credentials:**
 1. Go to https://developer.safaricom.co.ke/
