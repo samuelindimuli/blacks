@@ -35,7 +35,7 @@
         title: 'Urban Sunday',
         description: 'Join us for an unforgettable day of music, dance, and fun.',
         date: '2026-05-15',
-        location: 'bungoma Kenya',
+        location: 'Bungoma Kenya',
         tickets: [
           { type: 'General', price: 1, available: 100 },
           { type: 'VIP', price: 50, available: 50 }
