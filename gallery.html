@@ -58,6 +58,39 @@
       .section-subtitle {
         @apply block text-sm uppercase tracking-widest text-primary mb-4 font-semibold;
       }
+      .hero-carousel {
+        @apply relative w-full h-96 md:h-[500px] overflow-hidden rounded-lg shadow-lg;
+      }
+      .carousel-image {
+        @apply absolute w-full h-full object-cover transition-opacity duration-1000 ease-in-out;
+      }
+      .carousel-image.active {
+        @apply opacity-100;
+      }
+      .carousel-image:not(.active) {
+        @apply opacity-0;
+      }
+      .carousel-nav {
+        @apply absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-2 z-10;
+      }
+      .carousel-dot {
+        @apply w-3 h-3 rounded-full bg-white/50 cursor-pointer transition-all duration-300 hover:bg-white;
+      }
+      .carousel-dot.active {
+        @apply bg-primary w-8;
+      }
+      .gallery-card {
+        @apply relative w-full h-64 rounded-lg overflow-hidden shadow-md group cursor-pointer;
+      }
+      .gallery-card img {
+        @apply w-full h-full object-cover transition-transform duration-300 group-hover:scale-110;
+      }
+      .gallery-overlay {
+        @apply absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300;
+      }
+      .gallery-overlay p {
+        @apply text-white font-semibold text-sm;
+      }
     }
   </style>
 </head>
@@ -98,9 +131,20 @@
     </div>
   </section>
 
+  <!-- CAROUSEL HERO -->
+  <section class="py-12 bg-light">
+    <div class="container mx-auto px-5 max-w-6xl">
+      <div class="hero-carousel">
+        <div id="carouselContainer"></div>
+        <div class="carousel-nav" id="carouselNav"></div>
+      </div>
+    </div>
+  </section>
+
   <!-- GALLERY CONTENT -->
   <section class="py-16 bg-light">
     <div class="container mx-auto px-5 max-w-6xl">
+      <h2 class="text-3xl font-bold mb-12 text-center">All Photos</h2>
       <div id="galleryGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         <!-- Images will be dynamically loaded here -->
       </div>
@@ -126,45 +170,104 @@
 
   <script>
     const eventImages = [
-      { src: 'pics/drip1.jpg', alt: 'Drip and paint experience' },
-      { src: 'pics/drip2.jpg', alt: 'Drip and paint experience' },
-      { src: 'pics/drip4.jpg', alt: 'Drip and paint experience' },
-      { src: 'pics/drip5.jpg', alt: 'Drip and paint experience' },
-      { src: 'pics/drip6.jpg', alt: 'Drip and paint experience' },
-      { src: 'pics/drip7.jpg', alt: 'Drip and paint experience' },
-      { src: 'pics/drip8.jpg', alt: 'Drip and paint experience' },
-      { src: 'pics/drip9.jpg', alt: 'Drip and paint experience' },
-      { src: 'pics/drip10.jpg', alt: 'Drip and paint experience' },
-      { src: 'pics/drip11.jpg', alt: 'Drip and paint experience' },
-      { src: 'pics/drip12.jpg', alt: 'Drip and paint experience' },
-      { src: 'pics/drip13.jpg', alt: 'Drip and paint experience' },
-      { src: 'pics/drip14.jpg', alt: 'Drip and paint experience' },
-      { src: 'pics/drip15.jpg', alt: 'Drip and paint experience' },
-      { src: 'pics/drip16.jpg', alt: 'Drip and paint experience' },
-      { src: 'pics/drip17.jpg', alt: 'Drip and paint experience' },
-      { src: 'pics/drip18.jpg', alt: 'Drip and paint experience' },
-      { src: 'pics/drip19.jpg', alt: 'Drip and paint experience' },
-      { src: 'pics/drip20.jpg', alt: 'Drip and paint experience' },
-      { src: 'pics/drip21.jpg', alt: 'Drip and paint experience' },
-      // Add more image paths here!
-      // Example: { src: 'pics/event-image-3.jpg', alt: 'Another Event Highlight' },
+      { src: 'pics/drip1.jpg', name: 'Drip and Paint Experience' },
+      { src: 'pics/drip2.jpg', name: 'Drip and Paint Experience' },
+      { src: 'pics/drip4.jpg', name: 'Drip and Paint Experience' },
+      { src: 'pics/drip5.jpg', name: 'Drip and Paint Experience' },
+      { src: 'pics/drip6.jpg', name: 'Drip and Paint Experience' },
+      { src: 'pics/drip7.jpg', name: 'Drip and Paint Experience' },
+      { src: 'pics/drip8.jpg', name: 'Drip and Paint Experience' },
+      { src: 'pics/drip9.jpg', name: 'Drip and Paint Experience' },
+      { src: 'pics/drip10.jpg', name: 'Drip and Paint Experience' },
+      { src: 'pics/drip11.jpg', name: 'Drip and Paint Experience' },
+      { src: 'pics/drip12.jpg', name: 'Drip and Paint Experience' },
+      { src: 'pics/drip13.jpg', name: 'Drip and Paint Experience' },
+      { src: 'pics/drip14.jpg', name: 'Drip and Paint Experience' },
+      { src: 'pics/drip15.jpg', name: 'Drip and Paint Experience' },
+      { src: 'pics/drip16.jpg', name: 'Drip and Paint Experience' },
+      { src: 'pics/drip17.jpg', name: 'Drip and Paint Experience' },
+      { src: 'pics/drip18.jpg', name: 'Drip and Paint Experience' },
+      { src: 'pics/drip19.jpg', name: 'Drip and Paint Experience' },
+      { src: 'pics/drip20.jpg', name: 'Drip and Paint Experience' },
+      { src: 'pics/drip21.jpg', name: 'Drip and Paint Experience' },
     ];
+
+    let currentSlide = 0;
+    const autoScrollInterval = 4000; // Change image every 4 seconds
+
+    function initCarousel() {
+      const carouselContainer = document.getElementById('carouselContainer');
+      const carouselNav = document.getElementById('carouselNav');
+
+      // Create carousel images
+      carouselContainer.innerHTML = eventImages.map((image, index) => `
+        <img src="${image.src}" alt="${image.name}" class="carousel-image ${index === 0 ? 'active' : ''}">
+      `).join('');
+
+      // Create carousel navigation dots
+      carouselNav.innerHTML = eventImages.map((_, index) => `
+        <div class="carousel-dot ${index === 0 ? 'active' : ''}" data-index="${index}"></div>
+      `).join('');
+
+      // Add click handlers to dots
+      document.querySelectorAll('.carousel-dot').forEach(dot => {
+        dot.addEventListener('click', (e) => {
+          goToSlide(parseInt(e.target.dataset.index));
+          resetAutoScroll();
+        });
+      });
+
+      // Start auto-scroll
+      startAutoScroll();
+    }
+
+    function goToSlide(index) {
+      const images = document.querySelectorAll('.carousel-image');
+      const dots = document.querySelectorAll('.carousel-dot');
+
+      images.forEach(img => img.classList.remove('active'));
+      dots.forEach(dot => dot.classList.remove('active'));
+
+      images[index].classList.add('active');
+      dots[index].classList.add('active');
+
+      currentSlide = index;
+    }
+
+    function nextSlide() {
+      currentSlide = (currentSlide + 1) % eventImages.length;
+      goToSlide(currentSlide);
+    }
+
+    let autoScrollTimer;
+
+    function startAutoScroll() {
+      autoScrollTimer = setInterval(nextSlide, autoScrollInterval);
+    }
+
+    function resetAutoScroll() {
+      clearInterval(autoScrollTimer);
+      startAutoScroll();
+    }
 
     function renderGallery() {
       const galleryGrid = document.getElementById('galleryGrid');
       if (!galleryGrid) return;
 
       galleryGrid.innerHTML = eventImages.map(image => `
-        <div class="gallery-item bg-white rounded-lg shadow-md overflow-hidden transform transition-transform duration-300 hover:scale-105">
-          <img src="${image.src}" alt="${image.alt}" class="w-full h-64 object-cover">
-          <div class="p-4">
-            <p class="text-sm text-gray-600">${image.alt}</p>
+        <div class="gallery-card">
+          <img src="${image.src}" alt="${image.name}">
+          <div class="gallery-overlay">
+            <p>${image.name}</p>
           </div>
         </div>
       `).join('');
     }
 
-    document.addEventListener('DOMContentLoaded', renderGallery);
+    document.addEventListener('DOMContentLoaded', () => {
+      initCarousel();
+      renderGallery();
+    });
   </script>
 </body>
 </html>

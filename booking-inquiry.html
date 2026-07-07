@@ -144,6 +144,10 @@
                   <input type="email" name="contact_email" required class="input-field">
                 </div>
               </div>
+              <div class="mt-5">
+                <label class="block text-sm font-semibold text-gray-500 mb-2 uppercase">Contact Phone Number</label>
+                <input type="tel" name="contact_phone" placeholder="e.g. +254 712 345 678" class="input-field">
+              </div>
             </div>
           </div>
 
@@ -208,7 +212,8 @@
           `Requirements: ${data.requirements}\n` +
           `Budget: ${data.budget}\n` +
           `Contact Name: ${data.contact_name}\n` +
-          `Email: ${data.contact_email}`
+          `Email: ${data.contact_email}\n` +
+          `Phone: ${data.contact_phone}`
         );
 
         window.location.href = `mailto:enjoymentclan@gmail.com?subject=${subject}&body=${emailBody}`;
