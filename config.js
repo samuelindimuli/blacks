@@ -35,7 +35,7 @@
         title: 'Urban Sunday',
         description: 'Join us for an unforgettable day of music, dance, and fun.',
         date: '2026-05-15',
-        location: 'Los Angeles, CA',
+        location: 'bungoma Kenya',
         tickets: [
           { type: 'General', price: 1, available: 100 },
           { type: 'VIP', price: 50, available: 50 }
