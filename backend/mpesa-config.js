@@ -13,6 +13,16 @@ function trim(value) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+function getBackendUrl() {
+  const explicit = trim(process.env.BACKEND_URL);
+  if (explicit) return explicit;
+
+  const railwayDomain = trim(process.env.RAILWAY_PUBLIC_DOMAIN);
+  if (railwayDomain) return `https://${railwayDomain}`;
+
+  return '';
+}
+
 function getMpesaConfig() {
   const environment = trim(process.env.MPESA_ENVIRONMENT) || 'sandbox';
   const isSandbox = environment !== 'production';
@@ -25,7 +35,7 @@ function getMpesaConfig() {
     consumerSecret: trim(process.env.MPESA_CONSUMER_SECRET),
     shortcode: trim(process.env.MPESA_SHORTCODE) || (isSandbox ? SANDBOX_SHORTCODE : ''),
     passkey: passkey || (isSandbox ? SANDBOX_PASSKEYS[0] : ''),
-    backendUrl: trim(process.env.BACKEND_URL)
+    backendUrl: getBackendUrl()
   };
 }
 

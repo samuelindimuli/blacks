@@ -51,17 +51,17 @@ class Ticket {
   }
 
   static async markAsUsed(ticketId) {
-    const sql = 'UPDATE tickets SET status = "USED", used_at = CURRENT_TIMESTAMP WHERE ticket_id = ?';
+    const sql = "UPDATE tickets SET status = 'USED', used_at = CURRENT_TIMESTAMP WHERE ticket_id = ?";
     await dbRun(sql, [ticketId]);
   }
 
   static async getUnused(eventId) {
-    const sql = 'SELECT * FROM tickets WHERE event_id = ? AND status = "UNUSED" ORDER BY created_at DESC';
+    const sql = "SELECT * FROM tickets WHERE event_id = ? AND status = 'UNUSED' ORDER BY created_at DESC";
     return dbAll(sql, [eventId]);
   }
 
   static async getUsed(eventId) {
-    const sql = 'SELECT * FROM tickets WHERE event_id = ? AND status = "USED" ORDER BY used_at DESC';
+    const sql = "SELECT * FROM tickets WHERE event_id = ? AND status = 'USED' ORDER BY used_at DESC";
     return dbAll(sql, [eventId]);
   }
 

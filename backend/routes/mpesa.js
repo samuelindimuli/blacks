@@ -3,7 +3,7 @@ const router = express.Router();
 const axios = require('axios');
 const Order = require('../models/Order');
 const Ticket = require('../models/Ticket');
-const { dbRun, dbGet, dbAll } = require('../database');
+const { dbRun, dbGet, dbAll, resetAutoIncrement } = require('../database');
 const {
   getMpesaConfig,
   getMpesaBaseUrl,
@@ -295,7 +295,7 @@ router.post('/reports/reset-all', async (req, res) => {
     await dbRun('DELETE FROM tickets');
     await dbRun('DELETE FROM orders');
     await dbRun('DELETE FROM mpesa_logs');
-    await dbRun("DELETE FROM sqlite_sequence WHERE name IN ('tickets', 'orders', 'mpesa_logs')");
+    await resetAutoIncrement();
 
     res.json({ success: true, message: 'Database cleared. All counters reset. Ready for new data.' });
   } catch (error) {

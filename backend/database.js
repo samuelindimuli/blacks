@@ -1,8 +1,36 @@
 const path = require('path');
 
-const DATABASE_URL = process.env.DATABASE_URL;
+function isRailway() {
+  return Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID);
+}
 
-let db, dbRun, dbGet, dbAll;
+function isProduction() {
+  return process.env.NODE_ENV === 'production' || isRailway();
+}
+
+function resolveDatabaseUrl() {
+  const url = process.env.DATABASE_URL;
+  if (!url) return null;
+
+  // Railway's private hostname only resolves inside their network, not on your machine.
+  if (/railway\.internal/i.test(url) && !isRailway()) {
+    console.warn('⚠️  DATABASE_URL uses postgres.railway.internal, which is unreachable locally.');
+    console.warn('   Falling back to local SQLite. For local Postgres, use Railway\'s public URL from the dashboard.');
+    return null;
+  }
+
+  return url;
+}
+
+function toPgSql(sql) {
+  let index = 0;
+  return sql.replace(/\?/g, () => `$${++index}`);
+}
+
+const DATABASE_URL = resolveDatabaseUrl();
+const dialect = DATABASE_URL ? 'postgres' : 'sqlite';
+
+let db, dbRun, dbGet, dbAll, resetAutoIncrement;
 
 if (DATABASE_URL) {
   // Use Postgres in production (Railway)
@@ -12,18 +40,30 @@ if (DATABASE_URL) {
   db = pool;
 
   dbRun = async (sql, params = []) => {
-    const res = await pool.query(sql, params);
+    const res = await pool.query(toPgSql(sql), params);
     return res;
   };
 
   dbGet = async (sql, params = []) => {
-    const res = await pool.query(sql, params);
+    const res = await pool.query(toPgSql(sql), params);
     return res.rows[0];
   };
 
   dbAll = async (sql, params = []) => {
-    const res = await pool.query(sql, params);
+    const res = await pool.query(toPgSql(sql), params);
     return res.rows;
+  };
+
+  resetAutoIncrement = async () => {
+    // Postgres SERIAL sequences — optional reset after wipe; not required for correctness.
+    const tables = ['orders', 'tickets', 'mpesa_logs'];
+    for (const table of tables) {
+      try {
+        await pool.query(`SELECT setval(pg_get_serial_sequence('${table}', 'id'), 1, false)`);
+      } catch {
+        // Table may not use a serial id; ignore.
+      }
+    }
   };
 
   const initializeDatabase = async () => {
@@ -109,10 +149,12 @@ if (DATABASE_URL) {
     dbRun,
     dbGet,
     dbAll,
+    dialect,
+    resetAutoIncrement,
     initializeDatabase
   };
 
-} else if (process.env.NODE_ENV === 'production') {
+} else if (isProduction()) {
   console.error('❌ Production environment requires a DATABASE_URL.');
   console.error('   Add Railway Postgres and set DATABASE_URL, or switch to a production-ready database.');
   process.exit(1);
@@ -151,6 +193,9 @@ if (DATABASE_URL) {
       });
     });
   };
+
+  resetAutoIncrement = () =>
+    dbRun("DELETE FROM sqlite_sequence WHERE name IN ('tickets', 'orders', 'mpesa_logs')");
 
   const initializeDatabase = () => {
     // Create Events table (if not exists)
@@ -235,6 +280,8 @@ if (DATABASE_URL) {
     dbRun,
     dbGet,
     dbAll,
+    dialect,
+    resetAutoIncrement,
     initializeDatabase
   };
 }

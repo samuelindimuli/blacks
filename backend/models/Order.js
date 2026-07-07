@@ -71,17 +71,17 @@ class Order {
   }
 
   static async getPending() {
-    const sql = 'SELECT * FROM orders WHERE status = "PENDING" ORDER BY created_at DESC';
+    const sql = "SELECT * FROM orders WHERE status = 'PENDING' ORDER BY created_at DESC";
     return dbAll(sql);
   }
 
   static async getConfirmed() {
-    const sql = 'SELECT * FROM orders WHERE status = "CONFIRMED" ORDER BY created_at DESC';
+    const sql = "SELECT * FROM orders WHERE status = 'CONFIRMED' ORDER BY created_at DESC";
     return dbAll(sql);
   }
 
   static async getFailed() {
-    const sql = 'SELECT * FROM orders WHERE status = "FAILED" ORDER BY created_at DESC';
+    const sql = "SELECT * FROM orders WHERE status = 'FAILED' ORDER BY created_at DESC";
     return dbAll(sql);
   }
 }

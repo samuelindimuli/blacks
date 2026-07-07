@@ -1,4 +1,4 @@
-const { dbRun } = require('./database');
+const { dbRun, resetAutoIncrement } = require('./database');
 require('dotenv').config();
 
 async function wipeDatabase() {
@@ -9,9 +9,7 @@ async function wipeDatabase() {
     await dbRun('DELETE FROM tickets');
     await dbRun('DELETE FROM orders');
     await dbRun('DELETE FROM mpesa_logs');
-    
-    // Reset auto-increment counters to start IDs from 1 again
-    await dbRun("DELETE FROM sqlite_sequence WHERE name IN ('tickets', 'orders', 'mpesa_logs')");
+    await resetAutoIncrement();
     
     console.log('✅ Success: All orders, tickets, and M-Pesa logs have been cleared.');
     console.log('🚀 You are now ready to track new data input.');

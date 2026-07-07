@@ -27,7 +27,8 @@ const defaultDevOrigins = [
   'http://127.0.0.1:8080'
 ];
 
-const isProduction = process.env.NODE_ENV === 'production';
+const isProduction = process.env.NODE_ENV === 'production'
+  || Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID);
 
 function isAllowedOrigin(origin) {
   if (!origin) return true;
@@ -67,8 +68,6 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static front-end files from the project root
 app.use(express.static(path.join(__dirname, '..')));
 
-db.initializeDatabase();
-
 app.use('/api/orders', orderRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/mpesa', mpesaRoutes);
@@ -83,6 +82,22 @@ app.get('*', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(` Server running on port ${PORT}`);
-});
+const HOST = process.env.HOST || '0.0.0.0';
+
+async function startServer() {
+  try {
+    await Promise.resolve(db.initializeDatabase());
+    app.listen(PORT, HOST, () => {
+      const publicUrl = process.env.RAILWAY_PUBLIC_DOMAIN
+        ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+        : `http://localhost:${PORT}`;
+      console.log(` Server running on ${HOST}:${PORT}`);
+      console.log(` Public URL: ${publicUrl}`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to initialize database:', error.message);
+    process.exit(1);
+  }
+}
+
+startServer();
