@@ -84,6 +84,7 @@
 
       <!-- Cart Summary -->
       <div class="mt-12 bg-white p-6 rounded-custom shadow-md hidden" id="cartSection">
+        <div id="pendingOrderBanner" class="hidden bg-blue-100 p-4 rounded mb-4 text-center border border-blue-200"></div>
         <h2 class="text-2xl font-bold mb-4">Cart Summary</h2>
         <div id="cartItems" class="space-y-3 mb-4"></div>
         <div class="border-t pt-4 flex justify-between items-center">
@@ -116,11 +117,105 @@
   <script>
     const EVENTS_KEY = window.EC_CONFIG.eventsKey;
     const PURCHASES_KEY = window.EC_CONFIG.purchasesKey;
+    const CART_KEY = window.EC_CONFIG.cartKey;
+    const PENDING_CHECKOUT_KEY = window.EC_CONFIG.pendingCheckoutKey;
     const ANALYTICS_KEY = window.EC_CONFIG.analyticsKey;
     const defaultEvents = window.EC_CONFIG.defaultEvents;
     const API_BASE = window.EC_CONFIG.apiBaseUrl;
+    const PENDING_CHECKOUT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
-    let cart = [];
+    let cart = loadCart();
+
+    function loadCart() {
+      try {
+        const stored = localStorage.getItem(CART_KEY);
+        if (!stored) return [];
+        const parsed = JSON.parse(stored);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveCart() {
+      localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    }
+
+    function loadPendingCheckout() {
+      try {
+        const stored = localStorage.getItem(PENDING_CHECKOUT_KEY);
+        if (!stored) return null;
+        const pending = JSON.parse(stored);
+        if (!pending?.orderId) return null;
+
+        const age = Date.now() - new Date(pending.createdAt || 0).getTime();
+        if (age > PENDING_CHECKOUT_MAX_AGE_MS) {
+          clearPendingCheckout();
+          return null;
+        }
+
+        return pending;
+      } catch {
+        return null;
+      }
+    }
+
+    function savePendingCheckout(data) {
+      localStorage.setItem(PENDING_CHECKOUT_KEY, JSON.stringify({
+        ...data,
+        createdAt: data.createdAt || new Date().toISOString()
+      }));
+    }
+
+    function clearPendingCheckout() {
+      localStorage.removeItem(PENDING_CHECKOUT_KEY);
+      hidePendingOrderBanner();
+    }
+
+    function showPendingOrderBanner(orderId, phone) {
+      const banner = document.getElementById('pendingOrderBanner');
+      if (!banner) return;
+
+      banner.classList.remove('hidden');
+      banner.innerHTML = `
+        <p class="text-sm text-blue-800">Your Order ID: <strong class="font-mono">${orderId}</strong></p>
+        <p class="text-xs text-blue-600 mt-1">Payment pending. Complete M-Pesa on your phone, or verify below if you already paid.</p>
+        ${phone ? `<p class="text-xs text-blue-600 mt-1">Phone: ${phone}</p>` : ''}
+      `;
+
+      const manualOrderId = document.getElementById('manualOrderId');
+      if (manualOrderId && !manualOrderId.value) {
+        manualOrderId.value = orderId;
+      }
+
+      document.getElementById('manualConfirmSection')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function hidePendingOrderBanner() {
+      document.getElementById('pendingOrderBanner')?.classList.add('hidden');
+    }
+
+    function restorePersistedState() {
+      const pending = loadPendingCheckout();
+      if (!pending) {
+        updateCart();
+        return;
+      }
+
+      if (cart.length === 0 && Array.isArray(pending.cart) && pending.cart.length) {
+        cart = pending.cart;
+        saveCart();
+      }
+
+      updateCart();
+      showPendingOrderBanner(pending.orderId, pending.phone);
+
+      const checkoutBtn = document.getElementById('checkoutBtn');
+      if (checkoutBtn) {
+        checkoutBtn.textContent = 'Payment pending — verify below';
+        checkoutBtn.disabled = true;
+      }
+    }
 
     // Get stored events from admin
     function getStoredEvents() {
@@ -210,6 +305,7 @@
         id: Date.now()
       });
 
+      saveCart();
       updateCart();
       alert(`✅ Added ${quantity}x ${ticketType} ticket(s) for ${eventTitle}`);
     }
@@ -217,8 +313,9 @@
     function updateCart() {
       const cartSection = document.getElementById('cartSection');
       const cartItems = document.getElementById('cartItems');
+      const pending = loadPendingCheckout();
       
-      if (cart.length === 0) {
+      if (cart.length === 0 && !pending) {
         cartSection.classList.add('hidden');
         return;
       }
@@ -239,11 +336,12 @@
         `;
       }).join('');
 
-      document.getElementById('totalPrice').textContent = total.toFixed(2);
+      document.getElementById('totalPrice').textContent = (total || pending?.total || 0).toFixed(2);
     }
 
     function removeFromCart(idx) {
       cart.splice(idx, 1);
+      saveCart();
       updateCart();
     }
 
@@ -304,11 +402,15 @@
         const orderData = await createOrderResponse.json();
         const orderId = orderData.orderId;
 
-        // Show the Order ID to the user immediately
-        const orderDisplay = document.createElement('div');
-        orderDisplay.className = "bg-blue-100 p-4 rounded mb-4 text-center border border-blue-200";
-        orderDisplay.innerHTML = `<p class='text-sm text-blue-800'>Your Order ID: <strong class='font-mono'>${orderId}</strong></p><p class='text-xs text-blue-600 mt-1'>Save this in case you need to verify manually.</p>`;
-        document.getElementById('cartSection').prepend(orderDisplay);
+        savePendingCheckout({
+          orderId,
+          phone,
+          total,
+          cart: [...cart],
+          status: 'awaiting_payment'
+        });
+
+        showPendingOrderBanner(orderId, phone);
 
         checkoutBtn.textContent = 'Awaiting payment...';
 
@@ -332,6 +434,13 @@
 
         // Update UI to show we are waiting for confirmation
         checkoutBtn.textContent = 'Waiting for M-Pesa...';
+        savePendingCheckout({
+          orderId,
+          phone,
+          total,
+          cart: [...cart],
+          status: 'waiting_mpesa'
+        });
 
         const paymentResult = await pollPaymentStatus(orderId);
 
@@ -347,8 +456,9 @@
           });
           localStorage.setItem(PURCHASES_KEY, JSON.stringify(purchases));
 
-          // Clear cart and redirect
+          clearPendingCheckout();
           cart = [];
+          saveCart();
           updateCart();
           console.log('Redirecting to confirmation for Order:', orderId);
           window.location.href = `ticket-confirmation.html?orderId=${orderId}&phone=${phone}`;
@@ -360,11 +470,21 @@
         }
       } catch (error) {
         console.error('Checkout error:', error);
-        alert(`❌ Error: ${error.message}\n\nMake sure the backend server is running: npm run dev`);
+        const pending = loadPendingCheckout();
+        const pendingHint = pending?.orderId
+          ? `\n\nYour Order ID is saved: ${pending.orderId}\nYou can verify payment in the section below after refreshing.`
+          : '';
+        alert(`❌ Error: ${error.message}${pendingHint}`);
       } finally {
         const checkoutBtn = document.getElementById('checkoutBtn');
-        checkoutBtn.textContent = 'Proceed to Checkout';
-        checkoutBtn.disabled = false;
+        const pending = loadPendingCheckout();
+        if (pending?.orderId) {
+          checkoutBtn.textContent = 'Payment pending — verify below';
+          checkoutBtn.disabled = true;
+        } else {
+          checkoutBtn.textContent = 'Proceed to Checkout';
+          checkoutBtn.disabled = false;
+        }
       }
     });
 
@@ -412,6 +532,7 @@
         const checkData = await checkResponse.json();
 
         if (checkData.status === 'CONFIRMED') {
+          clearPendingCheckout();
           window.location.href = `ticket-confirmation.html?orderId=${orderId}`;
           return;
         }
@@ -425,7 +546,11 @@
 
         const contentType = response.headers.get('content-type');
         if (response.ok && contentType && contentType.includes('application/json')) {
-          const result = await response.json();
+          await response.json();
+          clearPendingCheckout();
+          cart = [];
+          saveCart();
+          updateCart();
           alert('✅ Payment verified! Redirecting to your tickets...');
           window.location.href = `ticket-confirmation.html?orderId=${orderId}`;
         } else {
@@ -449,6 +574,7 @@
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', () => {
       renderEvents();
+      restorePersistedState();
       // Refresh events every 5 seconds to catch admin updates
       setInterval(renderEvents, 5000);
     });

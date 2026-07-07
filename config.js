@@ -10,6 +10,8 @@
     eventsKey: 'ec_events',
     merchKey: 'ec_merchandise',
     purchasesKey: 'ec_purchases',
+    cartKey: 'ec_ticket_cart',
+    pendingCheckoutKey: 'ec_pending_checkout',
     analyticsKey: 'ec_analytics',
     defaultItems: [
       {
