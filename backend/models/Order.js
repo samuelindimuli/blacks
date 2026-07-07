@@ -1,12 +1,15 @@
 const { dbRun, dbGet, dbAll } = require('../database');
 const crypto = require('crypto');
+const Event = require('./Event');
 
 class Order {
   static generateOrderId() {
     return 'ORD-' + Date.now() + '-' + crypto.randomBytes(4).toString('hex').toUpperCase();
   }
 
-  static async create(eventId, amount, phone, ticketsCount, ticketType = 'General') {
+  static async create(eventId, amount, phone, ticketsCount, ticketType = 'General', eventMeta = {}) {
+    await Event.ensureExists(eventId, eventMeta);
+
     const orderId = this.generateOrderId();
     const sql = `
       INSERT INTO orders (order_id, event_id, amount, phone, tickets_count, ticket_type, status)

@@ -6,7 +6,17 @@ const { requireAuth } = require('../middleware/auth');
 
 router.post('/create', async (req, res) => {
   try {
-    const { eventId, amount, phone, ticketsCount, ticketType } = req.body;
+    const {
+      eventId,
+      amount,
+      phone,
+      ticketsCount,
+      ticketType,
+      eventTitle,
+      eventDate,
+      eventLocation,
+      eventDescription
+    } = req.body;
 
     if (!eventId || !amount || !phone || !ticketsCount) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -16,7 +26,12 @@ router.post('/create', async (req, res) => {
       return res.status(400).json({ error: 'Invalid phone number format' });
     }
 
-    const orderId = await Order.create(eventId, amount, phone, ticketsCount, ticketType);
+    const orderId = await Order.create(eventId, amount, phone, ticketsCount, ticketType, {
+      title: eventTitle,
+      date: eventDate,
+      location: eventLocation,
+      description: eventDescription
+    });
 
     res.json({
       success: true,

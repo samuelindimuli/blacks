@@ -10,7 +10,7 @@ const ADMIN_TOKEN = (typeof window !== 'undefined' && window.EC_CONFIG?.adminTok
 
 class TicketingClient {
   // Create new order
-  static async createOrder(eventId, amount, phone, ticketsCount, ticketType = 'General') {
+  static async createOrder(eventId, amount, phone, ticketsCount, ticketType = 'General', eventMeta = {}) {
     try {
       const response = await fetch(`${API_BASE}/orders/create`, {
         method: 'POST',
@@ -22,7 +22,11 @@ class TicketingClient {
           amount,
           phone,
           ticketsCount,
-          ticketType
+          ticketType,
+          eventTitle: eventMeta.title,
+          eventDate: eventMeta.date,
+          eventLocation: eventMeta.location,
+          eventDescription: eventMeta.description
         })
       });
       return await response.json();

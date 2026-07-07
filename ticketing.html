@@ -265,9 +265,12 @@
 
       const total = cart.reduce((sum, item) => sum + item.total, 0);
 
-      const eventId = cart[0]?.eventId || 'unknown-event';
+      const primaryEvent = cart[0];
+      const eventId = primaryEvent?.eventId || 'unknown-event';
       const ticketType = cart.map(item => item.ticketType).join(', ');
       const ticketsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+      const storedEvents = getStoredEvents();
+      const eventDetails = storedEvents.find((event) => event.id === eventId);
 
       try {
         const checkoutBtn = document.getElementById('checkoutBtn');
@@ -282,12 +285,20 @@
             amount: total,
             phone,
             ticketsCount,
-            ticketType
+            ticketType,
+            eventTitle: primaryEvent?.eventTitle || eventDetails?.title,
+            eventDate: eventDetails?.date,
+            eventLocation: eventDetails?.location,
+            eventDescription: eventDetails?.description
           })
         });
 
         if (!createOrderResponse.ok) {
-          throw new Error('Failed to create order');
+          const contentType = createOrderResponse.headers.get('content-type');
+          const errorDetail = contentType && contentType.includes('application/json')
+            ? (await createOrderResponse.json()).error
+            : `Server error (${createOrderResponse.status})`;
+          throw new Error(errorDetail || 'Failed to create order');
         }
 
         const orderData = await createOrderResponse.json();
