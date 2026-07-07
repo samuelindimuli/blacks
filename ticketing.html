@@ -87,9 +87,12 @@
         <div id="pendingOrderBanner" class="hidden bg-blue-100 p-4 rounded mb-4 text-center border border-blue-200"></div>
         <h2 class="text-2xl font-bold mb-4">Cart Summary</h2>
         <div id="cartItems" class="space-y-3 mb-4"></div>
-        <div class="border-t pt-4 flex justify-between items-center">
+        <div class="border-t pt-4 flex flex-wrap gap-3 justify-between items-center">
           <p class="text-lg font-semibold">Total: ksh<span id="totalPrice">0.00</span></p>
-          <button id="checkoutBtn" class="btn btn-primary">Proceed to Checkout</button>
+          <div class="flex flex-wrap gap-3">
+            <button id="clearPendingBtn" type="button" class="btn btn-outline hidden">Cancel & Start New Order</button>
+            <button id="checkoutBtn" class="btn btn-primary">Proceed to Checkout</button>
+          </div>
         </div>
       </div>
 
@@ -170,9 +173,44 @@
     function clearPendingCheckout() {
       localStorage.removeItem(PENDING_CHECKOUT_KEY);
       hidePendingOrderBanner();
+      updateCheckoutControls();
     }
 
-    function showPendingOrderBanner(orderId, phone) {
+    function updateCheckoutControls() {
+      const pending = loadPendingCheckout();
+      const checkoutBtn = document.getElementById('checkoutBtn');
+      const clearPendingBtn = document.getElementById('clearPendingBtn');
+
+      if (pending?.orderId) {
+        checkoutBtn.textContent = 'Payment pending — verify below';
+        checkoutBtn.disabled = true;
+        clearPendingBtn?.classList.remove('hidden');
+      } else {
+        checkoutBtn.textContent = 'Proceed to Checkout';
+        checkoutBtn.disabled = false;
+        clearPendingBtn?.classList.add('hidden');
+      }
+    }
+
+    function clearStalledOrder() {
+      const pending = loadPendingCheckout();
+      if (!pending?.orderId) return;
+
+      const confirmed = confirm(
+        `Cancel pending order ${pending.orderId} and start fresh?\n\nOnly do this if you have NOT paid yet. If you already paid, use manual verification below instead.`
+      );
+      if (!confirmed) return;
+
+      clearPendingCheckout();
+      updateCart();
+
+      const manualOrderId = document.getElementById('manualOrderId');
+      const manualMpesaCode = document.getElementById('manualMpesaCode');
+      if (manualOrderId) manualOrderId.value = '';
+      if (manualMpesaCode) manualMpesaCode.value = '';
+    }
+
+    function showPendingOrderBanner(orderId, phone, { scroll = false } = {}) {
       const banner = document.getElementById('pendingOrderBanner');
       if (!banner) return;
 
@@ -181,14 +219,23 @@
         <p class="text-sm text-blue-800">Your Order ID: <strong class="font-mono">${orderId}</strong></p>
         <p class="text-xs text-blue-600 mt-1">Payment pending. Complete M-Pesa on your phone, or verify below if you already paid.</p>
         ${phone ? `<p class="text-xs text-blue-600 mt-1">Phone: ${phone}</p>` : ''}
+        <button type="button" class="clear-pending-order-btn mt-3 text-xs font-semibold text-red-700 hover:text-red-900 underline">
+          Cancel this order & start fresh
+        </button>
       `;
+
+      banner.querySelector('.clear-pending-order-btn')?.addEventListener('click', clearStalledOrder);
 
       const manualOrderId = document.getElementById('manualOrderId');
       if (manualOrderId && !manualOrderId.value) {
         manualOrderId.value = orderId;
       }
 
-      document.getElementById('manualConfirmSection')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      updateCheckoutControls();
+
+      if (scroll) {
+        document.getElementById('manualConfirmSection')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     }
 
     function hidePendingOrderBanner() {
@@ -209,12 +256,6 @@
 
       updateCart();
       showPendingOrderBanner(pending.orderId, pending.phone);
-
-      const checkoutBtn = document.getElementById('checkoutBtn');
-      if (checkoutBtn) {
-        checkoutBtn.textContent = 'Payment pending — verify below';
-        checkoutBtn.disabled = true;
-      }
     }
 
     // Get stored events from admin
@@ -351,6 +392,12 @@
         return;
       }
 
+      const existingPending = loadPendingCheckout();
+      if (existingPending?.orderId) {
+        alert(`You already have a pending order (${existingPending.orderId}). Cancel it first or verify payment below.`);
+        return;
+      }
+
       // Get customer phone number
       const phone = prompt('Enter your phone number (e.g., 0791615005):');
       if (!phone) return;
@@ -410,7 +457,7 @@
           status: 'awaiting_payment'
         });
 
-        showPendingOrderBanner(orderId, phone);
+        showPendingOrderBanner(orderId, phone, { scroll: true });
 
         checkoutBtn.textContent = 'Awaiting payment...';
 
@@ -476,17 +523,11 @@
           : '';
         alert(`❌ Error: ${error.message}${pendingHint}`);
       } finally {
-        const checkoutBtn = document.getElementById('checkoutBtn');
-        const pending = loadPendingCheckout();
-        if (pending?.orderId) {
-          checkoutBtn.textContent = 'Payment pending — verify below';
-          checkoutBtn.disabled = true;
-        } else {
-          checkoutBtn.textContent = 'Proceed to Checkout';
-          checkoutBtn.disabled = false;
-        }
+        updateCheckoutControls();
       }
     });
+
+    document.getElementById('clearPendingBtn')?.addEventListener('click', clearStalledOrder);
 
     async function pollPaymentStatus(orderId, maxAttempts = 20, intervalMs = 10000) {
       for (let attempt = 0; attempt < maxAttempts; attempt++) {
