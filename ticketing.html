@@ -176,6 +176,33 @@
       updateCheckoutControls();
     }
 
+    function saveEvents(events) {
+      localStorage.setItem(EVENTS_KEY, JSON.stringify(events));
+    }
+
+    function decrementTicketAvailability(cartItems) {
+      const events = getStoredEvents();
+      let changed = false;
+
+      cartItems.forEach(item => {
+        const event = events.find(event => event.id === item.eventId);
+        if (!event) return;
+        const ticket = event.tickets.find(t => t.type === item.ticketType);
+        if (!ticket) return;
+
+        const newAvailable = Math.max(0, ticket.available - item.quantity);
+        if (newAvailable !== ticket.available) {
+          ticket.available = newAvailable;
+          changed = true;
+        }
+      });
+
+      if (changed) {
+        saveEvents(events);
+      }
+      return changed;
+    }
+
     function updateCheckoutControls() {
       const pending = loadPendingCheckout();
       const checkoutBtn = document.getElementById('checkoutBtn');
@@ -493,6 +520,8 @@
         const paymentResult = await pollPaymentStatus(orderId);
 
         if (paymentResult.status === 'CONFIRMED') {
+          decrementTicketAvailability(cart);
+
           const purchases = JSON.parse(localStorage.getItem(PURCHASES_KEY) || '[]');
           purchases.push({
             type: 'Tickets',
@@ -574,6 +603,23 @@
         const checkData = await checkResponse.json();
 
         if (checkData.status === 'CONFIRMED') {
+          const pending = loadPendingCheckout();
+          if (pending?.orderId === orderId && Array.isArray(pending.cart)) {
+            decrementTicketAvailability(pending.cart);
+            const purchases = JSON.parse(localStorage.getItem(PURCHASES_KEY) || '[]');
+            purchases.push({
+              type: 'Tickets',
+              items: pending.cart,
+              total: pending.total,
+              phone: pending.phone,
+              orderId,
+              date: new Date().toISOString()
+            });
+            localStorage.setItem(PURCHASES_KEY, JSON.stringify(purchases));
+            cart = [];
+            saveCart();
+            updateCart();
+          }
           clearPendingCheckout();
           window.location.href = `ticket-confirmation.html?orderId=${orderId}`;
           return;
@@ -589,6 +635,20 @@
         const contentType = response.headers.get('content-type');
         if (response.ok && contentType && contentType.includes('application/json')) {
           await response.json();
+          const pending = loadPendingCheckout();
+          if (pending?.orderId === orderId && Array.isArray(pending.cart)) {
+            decrementTicketAvailability(pending.cart);
+            const purchases = JSON.parse(localStorage.getItem(PURCHASES_KEY) || '[]');
+            purchases.push({
+              type: 'Tickets',
+              items: pending.cart,
+              total: pending.total,
+              phone: pending.phone,
+              orderId,
+              date: new Date().toISOString()
+            });
+            localStorage.setItem(PURCHASES_KEY, JSON.stringify(purchases));
+          }
           clearPendingCheckout();
           cart = [];
           saveCart();
