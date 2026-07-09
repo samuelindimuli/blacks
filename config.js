@@ -8,6 +8,7 @@
     apiBaseUrl: isLocal ? 'http://localhost:3000/api' : `${origin}/api`,
     storageKey: 'ec_content_items',
     eventsKey: 'ec_events',
+    upcomingEventsKey: 'ec_upcoming_events',
     merchKey: 'ec_merchandise',
     purchasesKey: 'ec_purchases',
     cartKey: 'ec_ticket_cart',
@@ -42,6 +43,16 @@
           { type: 'General', price: 1, available: 100 },
           { type: 'VIP', price: 50, available: 50 }
         ]
+      }
+    ],
+    defaultUpcomingEvents: [
+      {
+        id: 'upcoming-1',
+        title: 'Next Weekend Jam',
+        description: 'A preview of the next big event with artists and live demos.',
+        date: '2026-06-10',
+        location: 'Nairobi Kenya',
+        poster: 'pics/upcoming1.jpg'
       }
     ],
     defaultMerch: [
