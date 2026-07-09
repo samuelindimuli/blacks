@@ -221,8 +221,9 @@
                 <input type="text" name="eventLocation" required class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
               </div>
               <div>
-                <label class="block text-sm font-medium mb-2">Poster Image Path</label>
-                <input type="text" name="eventPoster" placeholder="e.g. pics/poster1.jpg" class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+                <label class="block text-sm font-medium mb-2">Poster Image</label>
+                <input type="file" name="eventPoster" accept="image/*" class="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-light hover:file:bg-[#E04E00]">
+                <p class="text-xs text-gray-500 mt-2">Choose an image from your device for the event poster.</p>
               </div>
               <div>
                 <label class="block text-sm font-medium mb-2">Description</label>
@@ -274,8 +275,9 @@
                 </div>
               </div>
               <div>
-                <label class="block text-sm font-medium mb-2">Image Path</label>
-                <input type="text" name="merchImage" placeholder="e.g., pics/tshirt1.png" required class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+                <label class="block text-sm font-medium mb-2">Merchandise Image</label>
+                <input type="file" name="merchImage" accept="image/*" required class="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-light hover:file:bg-[#E04E00]">
+                <p class="text-xs text-gray-500 mt-2">Choose an image from your device for the merchandise item.</p>
               </div>
               <div>
                 <label class="block text-sm font-medium mb-2">Category</label>
@@ -712,6 +714,20 @@
       refreshEventSelect();
     }
 
+    function readFileInput(fileOrValue) {
+      if (!fileOrValue) return Promise.resolve('');
+      if (typeof fileOrValue === 'string') return Promise.resolve(fileOrValue.trim());
+      if (fileOrValue instanceof File) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(fileOrValue);
+        });
+      }
+      return Promise.resolve('');
+    }
+
     function addEvent(title, date, location, description, poster, tickets) {
       const events = getStoredEvents();
       events.unshift({ id: `event-${Date.now()}`, title, date, location, description, poster, tickets });
@@ -882,7 +898,7 @@
     });
 
     // Events form handlers
-    eventForm.addEventListener('submit', event => {
+    eventForm.addEventListener('submit', async event => {
       event.preventDefault();
       const formData = new FormData(eventForm);
       const tickets = [];
@@ -896,12 +912,15 @@
         }
       });
 
+      const posterFile = formData.get('eventPoster');
+      const poster = posterFile && posterFile.size ? await readFileInput(posterFile) : '';
+
       addEvent(
         formData.get('eventTitle').trim(),
         formData.get('eventDate'),
         formData.get('eventLocation').trim(),
         formData.get('eventDescription').trim(),
-        (formData.get('eventPoster') || '').toString().trim(),
+        poster,
         tickets
       );
       eventForm.reset();
@@ -932,13 +951,16 @@
     });
 
     // Merchandise form handlers
-    merchForm.addEventListener('submit', event => {
+    merchForm.addEventListener('submit', async event => {
       event.preventDefault();
       const formData = new FormData(merchForm);
+      const merchImageFile = formData.get('merchImage');
+      const merchImage = merchImageFile && merchImageFile.size ? await readFileInput(merchImageFile) : '';
+
       addMerchItem(
         formData.get('merchName').trim(),
         formData.get('merchPrice'),
-        formData.get('merchImage').trim(),
+        merchImage,
         formData.get('merchCategory').trim(),
         formData.get('merchDescription').trim()
       );
