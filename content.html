@@ -76,16 +76,7 @@
       <div class="bg-white p-6 rounded-custom shadow-md">
         <h2 class="text-2xl font-bold mb-4 text-center">Live Streams</h2>
         <p class="mb-4 text-center">Watch the latest live sessions here. Starting a live broadcast is restricted to admins.</p>
-        <div class="space-y-4">
-          <div class="border border-gray-200 rounded-custom p-4">
-            <h3 class="text-xl font-semibold mb-2">Live DJ Session</h3>
-            <p class="text-sm text-gray-500 mb-4">Tune in to the current live stream.</p>
-            <a href="#" class="btn btn-primary w-full">Stream Live</a>
-          </div>
-          <div class="bg-gray-200 h-32 rounded-custom flex items-center justify-center">
-            <p class="text-gray-500">Live Stream Placeholder</p>
-          </div>
-        </div>
+        <div id="liveStreamPanel" class="space-y-4"></div>
       </div>
     </div>
   </section>
@@ -93,6 +84,7 @@
   <script>
     const STORAGE_KEY = window.EC_CONFIG.storageKey;
     const ANALYTICS_KEY = window.EC_CONFIG.analyticsKey;
+    const STREAM_KEY = window.EC_CONFIG.streamKey || 'ec_live_stream';
     const defaultItems = window.EC_CONFIG.defaultItems;
 
     function getStoredItems() {
@@ -119,6 +111,58 @@
       const analytics = JSON.parse(localStorage.getItem(ANALYTICS_KEY) || '{"siteVisits":0,"streams":0,"downloads":0,"purchases":0}');
       analytics[type]++;
       localStorage.setItem(ANALYTICS_KEY, JSON.stringify(analytics));
+    }
+
+    function getStoredStream() {
+      const stored = localStorage.getItem(STREAM_KEY);
+      if (!stored) return null;
+      try {
+        const parsed = JSON.parse(stored);
+        return parsed && typeof parsed === 'object' ? parsed : null;
+      } catch (error) {
+        localStorage.removeItem(STREAM_KEY);
+        return null;
+      }
+    }
+
+    function buildStreamEmbedUrl(url) {
+      if (!url) return '';
+      const trimmed = url.trim();
+      const youtubeMatch = trimmed.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/i);
+      if (youtubeMatch) return `https://www.youtube.com/embed/${youtubeMatch[1]}`;
+      return trimmed;
+    }
+
+    function renderLiveStream() {
+      const liveStreamPanel = document.getElementById('liveStreamPanel');
+      if (!liveStreamPanel) return;
+
+      const currentStream = getStoredStream();
+      if (!currentStream?.isLive) {
+        liveStreamPanel.innerHTML = `
+          <div class="border border-gray-200 rounded-custom p-4 bg-gray-50 text-center">
+            <h3 class="text-xl font-semibold mb-2">No live stream active</h3>
+            <p class="text-sm text-gray-500">Admins can start one from the dashboard and it will appear here instantly.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const embedUrl = buildStreamEmbedUrl(currentStream.streamUrl);
+      liveStreamPanel.innerHTML = `
+        <div class="border border-gray-200 rounded-custom p-4 bg-gray-50">
+          <div class="flex flex-col gap-3 mb-4">
+            <span class="inline-flex items-center self-start rounded-full bg-red-100 px-3 py-1 text-sm font-semibold text-red-700">LIVE</span>
+            <h3 class="text-xl font-semibold">${currentStream.title || 'Live Stream'}</h3>
+            <p class="text-sm text-gray-600">${currentStream.description || 'A live broadcast is currently running.'}</p>
+          </div>
+          ${embedUrl ? `
+            <div class="aspect-video overflow-hidden rounded-custom border border-gray-200 bg-black">
+              <iframe src="${embedUrl}" title="Live stream" class="h-full w-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+          ` : `<a href="${currentStream.streamUrl || '#'}" target="_blank" rel="noopener noreferrer" class="btn btn-primary w-full">Open Stream</a>`}
+        </div>
+      `;
     }
 
     function renderContentItems() {
@@ -163,8 +207,15 @@
       });
     }
 
+    window.addEventListener('storage', (event) => {
+      if (event.key === STREAM_KEY) {
+        renderLiveStream();
+      }
+    });
+
     document.addEventListener('DOMContentLoaded', () => {
       incrementAnalytics('siteVisits');
+      renderLiveStream();
       renderContentItems();
     });
   </script>

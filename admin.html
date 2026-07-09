@@ -151,6 +151,39 @@
           </section>
 
           <section class="bg-white rounded-custom shadow-md p-8">
+            <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
+              <div>
+                <h2 class="text-2xl font-bold">Live Stream Control</h2>
+                <p class="text-gray-500">Start a live broadcast from here and it will appear on the public content page.</p>
+              </div>
+            </div>
+
+            <form id="streamForm" class="grid md:grid-cols-2 gap-6">
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium mb-2">Stream Title</label>
+                  <input type="text" name="streamTitle" required class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-2">Description</label>
+                  <textarea name="streamDescription" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"></textarea>
+                </div>
+              </div>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium mb-2">Stream URL</label>
+                  <input type="url" name="streamUrl" placeholder="https://www.youtube.com/watch?v=..." class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+                </div>
+                <div class="flex flex-wrap gap-3">
+                  <button type="submit" class="btn btn-primary">Start Live Stream</button>
+                  <button type="button" id="stopStreamBtn" class="btn btn-outline">Stop Stream</button>
+                </div>
+                <div id="streamStatus" class="text-sm text-gray-600"></div>
+              </div>
+            </form>
+          </section>
+
+          <section class="bg-white rounded-custom shadow-md p-8">
             <h2 class="text-2xl font-bold mb-6">Current Content Uploads</h2>
             <div id="uploadList" class="grid gap-4"></div>
           </section>
@@ -181,6 +214,10 @@
               <div>
                 <label class="block text-sm font-medium mb-2">Location</label>
                 <input type="text" name="eventLocation" required class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-2">Poster Image Path</label>
+                <input type="text" name="eventPoster" placeholder="e.g. pics/poster1.jpg" class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
               </div>
               <div>
                 <label class="block text-sm font-medium mb-2">Description</label>
@@ -328,6 +365,7 @@
     const MERCH_KEY = EC.merchKey || 'ec_merchandise';
     const PURCHASES_KEY = EC.purchasesKey || 'ec_purchases';
     const ANALYTICS_KEY = EC.analyticsKey || 'ec_analytics';
+    const STREAM_KEY = EC.streamKey || 'ec_live_stream';
     const ADMIN_SESSION_KEY = 'ec_admin_authenticated';
 
     function normalizeToken(value) {
@@ -376,6 +414,9 @@
     const uploadList = document.getElementById('uploadList');
     const audioUploadForm = document.getElementById('audioUploadForm');
     const videoUploadForm = document.getElementById('videoUploadForm');
+    const streamForm = document.getElementById('streamForm');
+    const stopStreamButton = document.getElementById('stopStreamBtn');
+    const streamStatus = document.getElementById('streamStatus');
     const clearUploadsButton = document.getElementById('clearUploads');
 
     // Events
@@ -616,6 +657,40 @@
       `).join('');
     }
 
+    // Live stream functions
+    function getStoredStream() {
+      const stored = localStorage.getItem(STREAM_KEY);
+      if (!stored) return null;
+      try {
+        const parsed = JSON.parse(stored);
+        return parsed && typeof parsed === 'object' ? parsed : null;
+      } catch (error) {
+        localStorage.removeItem(STREAM_KEY);
+        return null;
+      }
+    }
+
+    function saveStream(streamData) {
+      localStorage.setItem(STREAM_KEY, JSON.stringify(streamData));
+      renderStreamStatus();
+    }
+
+    function renderStreamStatus() {
+      if (!streamStatus) return;
+      const currentStream = getStoredStream();
+      if (!currentStream?.isLive) {
+        streamStatus.innerHTML = '<span class="text-gray-500">No live stream is active right now.</span>';
+        return;
+      }
+
+      streamStatus.innerHTML = `
+        <div class="rounded-custom border border-green-200 bg-green-50 p-3 text-green-700">
+          <p class="font-semibold">Live now: ${currentStream.title || 'Live Stream'}</p>
+          <p class="text-sm mt-1">${currentStream.description || 'The stream is live on the public content page.'}</p>
+        </div>
+      `;
+    }
+
     // Events functions
     function getStoredEvents() {
       return getStoredData(EVENTS_KEY, defaultEvents);
@@ -627,9 +702,9 @@
       refreshEventSelect();
     }
 
-    function addEvent(title, date, location, description, tickets) {
+    function addEvent(title, date, location, description, poster, tickets) {
       const events = getStoredEvents();
-      events.unshift({ id: `event-${Date.now()}`, title, date, location, description, tickets });
+      events.unshift({ id: `event-${Date.now()}`, title, date, location, description, poster, tickets });
       saveEvents(events);
     }
 
@@ -642,6 +717,7 @@
       }
       eventsList.innerHTML = events.map(event => `
         <div class="border border-gray-200 rounded-custom p-5 bg-gray-50">
+          ${event.poster ? `<img src="${event.poster}" alt="${event.title} poster" class="w-full h-40 object-cover rounded-custom mb-4">` : ''}
           <h3 class="text-xl font-bold mb-2">${event.title}</h3>
           <p class="text-sm text-gray-600 mb-2">${event.date} - ${event.location}</p>
           <p class="mb-4">${event.description}</p>
@@ -742,6 +818,29 @@
       });
     }
 
+    if (streamForm) {
+      streamForm.addEventListener('submit', event => {
+        event.preventDefault();
+        const formData = new FormData(streamForm);
+        const streamPayload = {
+          isLive: true,
+          title: (formData.get('streamTitle') || '').toString().trim(),
+          description: (formData.get('streamDescription') || '').toString().trim(),
+          streamUrl: (formData.get('streamUrl') || '').toString().trim(),
+          startedAt: new Date().toISOString()
+        };
+        saveStream(streamPayload);
+        streamForm.reset();
+      });
+    }
+
+    if (stopStreamButton) {
+      stopStreamButton.addEventListener('click', () => {
+        localStorage.removeItem(STREAM_KEY);
+        renderStreamStatus();
+      });
+    }
+
     // Content form handlers
     audioUploadForm.addEventListener('submit', event => {
       event.preventDefault();
@@ -792,6 +891,7 @@
         formData.get('eventDate'),
         formData.get('eventLocation').trim(),
         formData.get('eventDescription').trim(),
+        (formData.get('eventPoster') || '').toString().trim(),
         tickets
       );
       eventForm.reset();
@@ -898,6 +998,7 @@
       if (authorized) {
         initializeAnalyticsEvents();
       }
+      renderStreamStatus();
     });
   </script>
 </body>

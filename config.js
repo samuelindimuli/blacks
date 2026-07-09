@@ -13,6 +13,7 @@
     cartKey: 'ec_ticket_cart',
     pendingCheckoutKey: 'ec_pending_checkout',
     analyticsKey: 'ec_analytics',
+    streamKey: 'ec_live_stream',
     defaultItems: [
       {
         id: 'audio-1',
@@ -36,6 +37,7 @@
         description: 'Join us for an unforgettable day of music, dance, and fun.',
         date: '2026-05-15',
         location: 'Bungoma Kenya',
+        poster: 'pics/poster1.jpg',
         tickets: [
           { type: 'General', price: 1, available: 100 },
           { type: 'VIP', price: 50, available: 50 }
