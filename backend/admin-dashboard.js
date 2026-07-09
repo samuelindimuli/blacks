@@ -33,15 +33,16 @@ class TicketAnalyticsDashboard {
   async renderEventAnalytics(eventId, eventTitle = null) {
     this.currentEventId = eventId;
     this.currentEventTitle = eventTitle;
-    
+
     try {
+      await this.checkBackendAvailability();
       let analytics;
       if (this.backendAvailable) {
         analytics = await this.fetchEventAnalytics(eventId);
       } else {
-        analytics = this.getDemoAnalytics(eventId); // Use demo data if backend is offline
+        analytics = this.getDemoAnalytics(eventId);
       }
-      this.displayAnalytics(analytics);
+      this.displayAnalytics(analytics, !this.backendAvailable);
     } catch (error) {
       console.error('Error rendering analytics:', error);
       this.showError(`Failed to load real-time analytics: ${error.message}. Please check if the backend is running.`);
@@ -110,6 +111,11 @@ class TicketAnalyticsDashboard {
 
     let html = `
       <div class="space-y-8">
+        ${isDemo ? `
+        <div class="bg-yellow-50 border border-yellow-300 text-yellow-800 px-4 py-3 rounded">
+          Backend is offline — showing demo data. Start the server with <code>npm run dev</code> for live analytics.
+        </div>
+        ` : ''}
         <!-- Event Header -->
         <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-primary">
           <h2 class="text-2xl font-bold text-gray-800">${displayName}</h2>

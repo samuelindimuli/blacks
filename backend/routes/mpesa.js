@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { requireAuth } = require('../middleware/auth');
 const axios = require('axios');
 const Order = require('../models/Order');
 const Ticket = require('../models/Ticket');
@@ -187,14 +188,9 @@ async function querySafaricomStatus(checkoutRequestId) {
 }
 
 // Reports Endpoint - Provide real-time data to the admin dashboard
-router.get('/reports/event/:eventId', async (req, res) => {
+router.get('/reports/event/:eventId', requireAuth, async (req, res) => {
   try {
     const { eventId } = req.params;
-    const adminToken = req.headers['x-admin-token'];
-
-    if (adminToken !== process.env.ADMIN_TOKEN) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
 
     // 1. Order Summary Stats
     const stats = await dbGet(`
@@ -277,14 +273,9 @@ router.get('/reports/event/:eventId', async (req, res) => {
 });
 
 // Reset Data Endpoint - Clear all orders and tickets for a fresh start
-router.post('/reports/reset-all', async (req, res) => {
+router.post('/reports/reset-all', requireAuth, async (req, res) => {
   try {
-    const adminToken = req.headers['x-admin-token'];
     const { resetPassword } = req.body;
-
-    if (adminToken !== process.env.ADMIN_TOKEN) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
 
     if (resetPassword !== (process.env.RESET_PASSWORD || 'admin-reset-123')) {
       return res.status(403).json({ error: 'Invalid reset password.' });

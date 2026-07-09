@@ -61,7 +61,7 @@
       </div>
       <nav>
         <a href="content.html" class="btn btn-outline">View Content</a>
-        <a href="ticket-scanner.html?token=enjoyment-admin-token" class="btn btn-primary ml-2">Ticket Scanner</a>
+        <a id="ticketScannerLink" href="ticket-scanner.html" class="btn btn-primary ml-2">Ticket Scanner</a>
       </nav>
     </div>
   </header>
@@ -452,6 +452,51 @@
       updateAnalyticsDisplay();
     }
 
+    function isTicketPurchase(purchase) {
+      return purchase.type === 'Event Ticket' || purchase.type === 'Tickets';
+    }
+
+    function normalizeTicketEntries(purchases, events) {
+      const entries = [];
+
+      purchases.filter(isTicketPurchase).forEach(purchase => {
+        if (purchase.type === 'Tickets' && Array.isArray(purchase.items)) {
+          purchase.items.forEach(item => {
+            let eventName = item.eventTitle || 'Unknown Event';
+            if (eventName.startsWith('event-')) {
+              const eventMatch = events.find(e => e.id === eventName || e.id === item.eventId);
+              if (eventMatch) eventName = eventMatch.title;
+            }
+            entries.push({
+              eventName,
+              ticketType: item.ticketType || 'Unknown',
+              price: item.total || (item.price * item.quantity),
+              date: purchase.date
+            });
+          });
+          return;
+        }
+
+        if (purchase.type === 'Event Ticket') {
+          const parts = (purchase.item || '').split(' - ');
+          let eventName = parts[0] || 'Unknown Event';
+          const ticketType = parts[1] || 'Unknown';
+          if (eventName.startsWith('event-')) {
+            const eventMatch = events.find(e => e.id === eventName);
+            if (eventMatch) eventName = eventMatch.title;
+          }
+          entries.push({
+            eventName,
+            ticketType,
+            price: purchase.price || 0,
+            date: purchase.date
+          });
+        }
+      });
+
+      return entries;
+    }
+
     function updateAnalyticsDisplay() {
       const analytics = getStoredData(ANALYTICS_KEY, { siteVisits: 0, streams: 0, downloads: 0, purchases: 0 });
       siteVisitsEl.textContent = analytics.siteVisits;
@@ -461,30 +506,15 @@
 
       const purchases = getStoredData(PURCHASES_KEY, []);
       const events = getStoredEvents();
-      
-      // Separate ticket and merchandise purchases
-      const ticketPurchases = purchases.filter(p => p.type === 'Event Ticket');
-      const merchPurchases = purchases.filter(p => p.type !== 'Event Ticket');
-      
-      ticketPurchasesEl.textContent = ticketPurchases.length;
-      merchPurchasesEl.textContent = merchPurchases.length;
-      
-      // Group ticket purchases by event and ticket type
-      const ticketsByEvent = {};
-      ticketPurchases.forEach(purchase => {
-        // Extract event name and ticket type from item (format: "Event Title - Ticket Type")
-        const parts = purchase.item.split(' - ');
-        let eventName = parts[0];
-        const ticketType = parts[1] || 'Unknown';
+      const ticketEntries = normalizeTicketEntries(purchases, events);
+      const merchPurchases = purchases.filter(p => !isTicketPurchase(p));
 
-        // If the event name is actually an ID, look up the real title
-        if (eventName.startsWith('event-')) {
-          const eventMatch = events.find(e => e.id === eventName);
-          if (eventMatch) {
-            eventName = eventMatch.title;
-          }
-        }
-        
+      ticketPurchasesEl.textContent = ticketEntries.length;
+      merchPurchasesEl.textContent = merchPurchases.length;
+
+      const ticketsByEvent = {};
+      ticketEntries.forEach(entry => {
+        const { eventName, ticketType, price, date } = entry;
         if (!ticketsByEvent[eventName]) {
           ticketsByEvent[eventName] = {
             totalCount: 0,
@@ -493,19 +523,19 @@
             purchases: []
           };
         }
-        
+
         if (!ticketsByEvent[eventName].byType[ticketType]) {
           ticketsByEvent[eventName].byType[ticketType] = {
             count: 0,
             revenue: 0
           };
         }
-        
+
         ticketsByEvent[eventName].totalCount++;
-        ticketsByEvent[eventName].totalRevenue += purchase.price;
+        ticketsByEvent[eventName].totalRevenue += price;
         ticketsByEvent[eventName].byType[ticketType].count++;
-        ticketsByEvent[eventName].byType[ticketType].revenue += purchase.price;
-        ticketsByEvent[eventName].purchases.push(purchase);
+        ticketsByEvent[eventName].byType[ticketType].revenue += price;
+        ticketsByEvent[eventName].purchases.push({ date, ticketType, price });
       });
       
       // Display ticket purchases organized by event and ticket type
@@ -594,6 +624,7 @@
     function saveEvents(events) {
       saveData(EVENTS_KEY, events);
       renderEvents();
+      refreshEventSelect();
     }
 
     function addEvent(title, date, location, description, tickets) {
@@ -673,6 +704,10 @@
     function showAdminPanel() {
       unauthorizedMessage.classList.add('hidden');
       adminTools.classList.remove('hidden');
+      const scannerLink = document.getElementById('ticketScannerLink');
+      if (scannerLink) {
+        scannerLink.href = `ticket-scanner.html?token=${encodeURIComponent(ADMIN_TOKEN)}`;
+      }
       renderUploads();
       renderEvents();
       renderMerch();
@@ -783,6 +818,7 @@
     clearEventsButton.addEventListener('click', () => {
       saveData(EVENTS_KEY, []);
       renderEvents();
+      refreshEventSelect();
     });
 
     // Merchandise form handlers
@@ -806,7 +842,7 @@
 
     // Clear all data button
     document.getElementById('clearAllData').addEventListener('click', () => {
-      if (confirm('⚠️ This will delete ALL data (content, events, merchandise, purchases, analytics). This cannot be undone. Are you sure?')) {
+      if (confirm('⚠️ This will delete ALL local data (content, events, merchandise, purchases, analytics, cart, and pending checkouts). Backend sales data is not affected. Continue?')) {
         localStorage.clear();
         console.log('✅ All data cleared');
         // Reset page
@@ -815,26 +851,32 @@
     });
 
     // Initialize event selector for analytics
-    function initializeAnalyticsEvents() {
+    function refreshEventSelect() {
       const eventSelect = document.getElementById('eventSelect');
+      if (!eventSelect) return;
+
+      const previousValue = eventSelect.value;
       const events = getStoredEvents();
-      
-      events.forEach(event => {
+      const options = events.length ? events : defaultEvents;
+
+      eventSelect.innerHTML = '<option value="">-- Choose an event --</option>';
+      options.forEach(event => {
         const option = document.createElement('option');
         option.value = event.id;
         option.textContent = event.title;
         eventSelect.appendChild(option);
       });
 
-      // Load events from config if no events in storage
-      if (events.length === 0 && defaultEvents.length > 0) {
-        defaultEvents.forEach(event => {
-          const option = document.createElement('option');
-          option.value = event.id;
-          option.textContent = event.title;
-          eventSelect.appendChild(option);
-        });
+      if (previousValue && [...eventSelect.options].some(option => option.value === previousValue)) {
+        eventSelect.value = previousValue;
       }
+    }
+
+    function initializeAnalyticsEvents() {
+      const eventSelect = document.getElementById('eventSelect');
+      if (!eventSelect) return;
+
+      refreshEventSelect();
 
       // Event change listener
       eventSelect.addEventListener('change', (e) => {

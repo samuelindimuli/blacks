@@ -62,7 +62,7 @@
           </a>
         </div>
         <nav>
-          <a href="admin.html?token=enjoyment-admin-token" class="text-light hover:text-primary">Back to Admin</a>
+          <a id="backToAdminLink" href="admin.html" class="text-light hover:text-primary">Back to Admin</a>
         </nav>
       </div>
     </div>
@@ -154,6 +154,10 @@
   <script>
     const API_BASE = window.EC_CONFIG.apiBaseUrl;
     const ADMIN_TOKEN = new URLSearchParams(window.location.search).get('token') || window.EC_CONFIG.adminToken;
+    const backToAdminLink = document.getElementById('backToAdminLink');
+    if (backToAdminLink) {
+      backToAdminLink.href = `admin.html?token=${encodeURIComponent(ADMIN_TOKEN)}`;
+    }
     let scanner = null;
     let scannedStats = {
       verified: 0,
