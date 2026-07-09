@@ -206,6 +206,7 @@
             </div>
 
             <form id="eventForm" class="space-y-6">
+              <input type="hidden" id="eventIdInput" name="eventId" value="">
               <div class="grid md:grid-cols-2 gap-6">
                 <div>
                   <label class="block text-sm font-medium mb-2">Event Title</label>
@@ -242,7 +243,10 @@
                 <button type="button" id="addTicketPackage" class="btn btn-outline mt-4">Add Another Ticket Package</button>
               </div>
 
-              <button type="submit" class="btn btn-primary w-full">Create Event</button>
+              <div class="flex flex-col gap-3 sm:flex-row">
+                <button type="submit" id="eventSubmitBtn" class="btn btn-primary w-full sm:w-auto">Create Event</button>
+                <button type="button" id="eventCancelBtn" class="btn btn-outline w-full sm:w-auto hidden">Cancel Edit</button>
+              </div>
             </form>
           </section>
 
@@ -728,35 +732,26 @@
       return Promise.resolve('');
     }
 
+    let editingEventId = null;
+
+    function getEventById(eventId) {
+      return getStoredEvents().find((event) => event.id === eventId);
+    }
+
+    function updateEvent(updatedEvent) {
+      const events = getStoredEvents().map((event) => event.id === updatedEvent.id ? updatedEvent : event);
+      saveEvents(events);
+    }
+
+    function deleteEvent(eventId) {
+      const events = getStoredEvents().filter((event) => event.id !== eventId);
+      saveEvents(events);
+    }
+
     function addEvent(title, date, location, description, poster, tickets) {
       const events = getStoredEvents();
       events.unshift({ id: `event-${Date.now()}`, title, date, location, description, poster, tickets });
       saveEvents(events);
-    }
-
-    function renderEvents() {
-      const events = getStoredEvents();
-      if (!eventsList) return;
-      if (!events.length) {
-        eventsList.innerHTML = '<p class="text-gray-500">No events available yet.</p>';
-        return;
-      }
-      eventsList.innerHTML = events.map(event => `
-        <div class="border border-gray-200 rounded-custom p-5 bg-gray-50">
-          ${event.poster ? `<img src="${event.poster}" alt="${event.title} poster" class="w-full h-40 object-cover rounded-custom mb-4">` : ''}
-          <h3 class="text-xl font-bold mb-2">${event.title}</h3>
-          <p class="text-sm text-gray-600 mb-2">${event.date} - ${event.location}</p>
-          <p class="mb-4">${event.description}</p>
-          <div class="space-y-2">
-            ${event.tickets.map(ticket => `
-              <div class="flex justify-between items-center bg-white p-3 rounded">
-                <span>${ticket.type}</span>
-                <span>KSH ${ticket.price} (${ticket.available} available)</span>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      `).join('');
     }
 
     // Merchandise functions
@@ -769,10 +764,125 @@
       renderMerch();
     }
 
+    function renderEvents() {
+      const events = getStoredEvents();
+      if (!eventsList) return;
+      if (!events.length) {
+        eventsList.innerHTML = '<p class="text-gray-500">No events available yet.</p>';
+        return;
+      }
+      eventsList.innerHTML = events.map(event => `
+        <div class="border border-gray-200 rounded-custom p-5 bg-gray-50" data-event-id="${event.id}">
+          ${event.poster ? `<img src="${event.poster}" alt="${event.title} poster" class="w-full h-40 object-cover rounded-custom mb-4">` : ''}
+          <h3 class="text-xl font-bold mb-2">${event.title}</h3>
+          <p class="text-sm text-gray-600 mb-2">${event.date} - ${event.location}</p>
+          <p class="mb-4">${event.description}</p>
+          <div class="space-y-2">
+            ${event.tickets.map(ticket => `
+              <div class="flex justify-between items-center bg-white p-3 rounded">
+                <span>${ticket.type}</span>
+                <span>KSH ${ticket.price} (${ticket.available} available)</span>
+              </div>
+            `).join('')}
+          </div>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button type="button" class="event-edit-btn btn btn-outline text-sm px-4 py-2" data-event-id="${event.id}">Edit</button>
+            <button type="button" class="event-delete-btn btn btn-outline text-sm px-4 py-2 text-red-600 border-red-400 hover:bg-red-600 hover:text-white" data-event-id="${event.id}">Delete</button>
+          </div>
+        </div>
+      `).join('');
+      hydrateEventListActions();
+    }
+
     function addMerchItem(name, price, image, category, description) {
       const merch = getStoredMerch();
       merch.unshift({ id: `merch-${Date.now()}`, name, price: parseInt(price), image, category, description });
       saveMerch(merch);
+    }
+
+    function hydrateEventListActions() {
+      eventsList.querySelectorAll('.event-edit-btn').forEach((button) => {
+        button.addEventListener('click', () => {
+          const eventId = button.dataset.eventId;
+          const eventData = getEventById(eventId);
+          if (!eventData) return;
+          populateEventForm(eventData);
+        });
+      });
+
+      eventsList.querySelectorAll('.event-delete-btn').forEach((button) => {
+        button.addEventListener('click', () => {
+          const eventId = button.dataset.eventId;
+          if (!confirm('Are you sure you want to delete this event?')) return;
+          deleteEvent(eventId);
+        });
+      });
+    }
+
+    function populateEventForm(eventData) {
+      editingEventId = eventData.id;
+      const eventIdInput = document.getElementById('eventIdInput');
+      const submitBtn = document.getElementById('eventSubmitBtn');
+      const cancelBtn = document.getElementById('eventCancelBtn');
+
+      if (eventIdInput) eventIdInput.value = eventData.id;
+      if (eventForm) {
+        eventForm.querySelector('input[name="eventTitle"]').value = eventData.title;
+        eventForm.querySelector('input[name="eventDate"]').value = eventData.date;
+        eventForm.querySelector('input[name="eventLocation"]').value = eventData.location;
+        eventForm.querySelector('textarea[name="eventDescription"]').value = eventData.description;
+        eventForm.querySelector('input[name="eventPoster"]').value = '';
+        populateTicketPackages(eventData.tickets || []);
+      }
+
+      if (submitBtn) submitBtn.textContent = 'Update Event';
+      if (cancelBtn) cancelBtn.classList.remove('hidden');
+    }
+
+    function resetEventForm() {
+      editingEventId = null;
+      const eventIdInput = document.getElementById('eventIdInput');
+      const submitBtn = document.getElementById('eventSubmitBtn');
+      const cancelBtn = document.getElementById('eventCancelBtn');
+
+      if (eventIdInput) eventIdInput.value = '';
+      if (eventForm) {
+        eventForm.reset();
+        ticketPackages.innerHTML = `
+          <div class="ticket-package grid md:grid-cols-3 gap-4">
+            <input type="text" placeholder="Type (e.g., General)" name="ticketType" required class="px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+            <input type="number" placeholder="Price (KSH)" name="ticketPrice" required class="px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+            <input type="number" placeholder="Available" name="ticketAvailable" required class="px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+          </div>
+        `;
+      }
+
+      if (submitBtn) submitBtn.textContent = 'Create Event';
+      if (cancelBtn) cancelBtn.classList.add('hidden');
+    }
+
+    function populateTicketPackages(tickets) {
+      ticketPackages.innerHTML = '';
+      if (!tickets || tickets.length === 0) {
+        ticketPackages.innerHTML = `
+          <div class="ticket-package grid md:grid-cols-3 gap-4">
+            <input type="text" placeholder="Type (e.g., General)" name="ticketType" required class="px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+            <input type="number" placeholder="Price (KSH)" name="ticketPrice" required class="px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+            <input type="number" placeholder="Available" name="ticketAvailable" required class="px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+          </div>
+        `;
+        return;
+      }
+
+      tickets.forEach(ticket => {
+        ticketPackages.innerHTML += `
+          <div class="ticket-package grid md:grid-cols-3 gap-4">
+            <input type="text" placeholder="Type (e.g., General)" name="ticketType" value="${ticket.type}" required class="px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+            <input type="number" placeholder="Price (KSH)" name="ticketPrice" value="${ticket.price}" required class="px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+            <input type="number" placeholder="Available" name="ticketAvailable" value="${ticket.available}" required class="px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+          </div>
+        `;
+      });
     }
 
     function renderMerch() {
@@ -914,23 +1024,31 @@
 
       const posterFile = formData.get('eventPoster');
       const poster = posterFile && posterFile.size ? await readFileInput(posterFile) : '';
+      const eventId = formData.get('eventId')?.toString().trim();
+      const title = formData.get('eventTitle').trim();
+      const date = formData.get('eventDate');
+      const location = formData.get('eventLocation').trim();
+      const description = formData.get('eventDescription').trim();
 
-      addEvent(
-        formData.get('eventTitle').trim(),
-        formData.get('eventDate'),
-        formData.get('eventLocation').trim(),
-        formData.get('eventDescription').trim(),
-        poster,
-        tickets
-      );
-      eventForm.reset();
-      ticketPackages.innerHTML = `
-        <div class="ticket-package grid md:grid-cols-3 gap-4">
-          <input type="text" placeholder="Type (e.g., General)" name="ticketType" required class="px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
-          <input type="number" placeholder="Price (KSH)" name="ticketPrice" required class="px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
-          <input type="number" placeholder="Available" name="ticketAvailable" required class="px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
-        </div>
-      `;
+      if (eventId) {
+        const existing = getEventById(eventId);
+        if (existing) {
+          updateEvent({
+            ...existing,
+            title,
+            date,
+            location,
+            description,
+            poster: poster || existing.poster,
+            tickets
+          });
+          resetEventForm();
+          return;
+        }
+      }
+
+      addEvent(title, date, location, description, poster, tickets);
+      resetEventForm();
     });
 
     addTicketPackageButton.addEventListener('click', () => {
@@ -945,10 +1063,49 @@
     });
 
     clearEventsButton.addEventListener('click', () => {
+      if (!confirm('Clear all events? This cannot be undone.')) return;
       saveData(EVENTS_KEY, []);
+      resetEventForm();
       renderEvents();
       refreshEventSelect();
     });
+
+    const eventCancelBtn = document.getElementById('eventCancelBtn');
+    if (eventCancelBtn) {
+      eventCancelBtn.addEventListener('click', () => {
+        resetEventForm();
+      });
+    }
+
+    function renderEvents() {
+      const events = getStoredEvents();
+      if (!eventsList) return;
+      if (!events.length) {
+        eventsList.innerHTML = '<p class="text-gray-500">No events available yet.</p>';
+        return;
+      }
+      eventsList.innerHTML = events.map(event => `
+        <div class="border border-gray-200 rounded-custom p-5 bg-gray-50" data-event-id="${event.id}">
+          ${event.poster ? `<img src="${event.poster}" alt="${event.title} poster" class="w-full h-40 object-cover rounded-custom mb-4">` : ''}
+          <h3 class="text-xl font-bold mb-2">${event.title}</h3>
+          <p class="text-sm text-gray-600 mb-2">${event.date} - ${event.location}</p>
+          <p class="mb-4">${event.description}</p>
+          <div class="space-y-2">
+            ${event.tickets.map(ticket => `
+              <div class="flex justify-between items-center bg-white p-3 rounded">
+                <span>${ticket.type}</span>
+                <span>KSH ${ticket.price} (${ticket.available} available)</span>
+              </div>
+            `).join('')}
+          </div>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button type="button" class="event-edit-btn btn btn-outline text-sm px-4 py-2" data-event-id="${event.id}">Edit</button>
+            <button type="button" class="event-delete-btn btn btn-outline text-sm px-4 py-2 text-red-600 border-red-400 hover:bg-red-600 hover:text-white" data-event-id="${event.id}">Delete</button>
+          </div>
+        </div>
+      `).join('');
+      hydrateEventListActions();
+    }
 
     // Merchandise form handlers
     merchForm.addEventListener('submit', async event => {
