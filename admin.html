@@ -497,7 +497,7 @@
     const merchForm = document.getElementById('merchForm');
     const merchList = document.getElementById('merchList');
     const clearMerchButton = document.getElementById('clearMerch');
-    const addMerchandiseSubmitBtn = document.getElementById('addMerchandiseSubmitBtn);
+    const addMerchandiseSubmitBtn = document.getElementById('addMerchandiseSubmitBtn');
 
     // Upcoming Events
     const upcomingEventForm = document.getElementById('upcomingEventForm');
@@ -922,6 +922,12 @@
       renderMerch();
     }
 
+        function addMerchItem(name, price, image, category, description) {
+      const merch = getStoredMerch();
+      merch.unshift({ id: `merch-${Date.now()}`, name, price: parseInt(price), image, category, description });
+      saveMerch(merch);
+    }
+
     function renderEvents() {
       const events = getStoredEvents();
       if (!eventsList) return;
@@ -952,11 +958,7 @@
       hydrateEventListActions();
     }
 
-    function addMerchItem(name, price, image, category, description) {
-      const merch = getStoredMerch();
-      merch.unshift({ id: `merch-${Date.now()}`, name, price: parseInt(price), image, category, description });
-      saveMerch(merch);
-    }
+
 
     function hydrateEventListActions() {
       eventsList.querySelectorAll('.event-edit-btn').forEach((button) => {
@@ -1043,27 +1045,28 @@
       });
     }
 
-    function renderMerch() {
-      const merch = getStoredMerch();
-      if (!merchList) return;
-      if (!merch.length) {
-        merchList.innerHTML = '<p class="text-gray-500">No merchandise available yet.</p>';
-        return;
-      }
-      merchList.innerHTML = merch.map(item => `
-        <div class="border border-gray-200 rounded-custom p-5 bg-gray-50">
-          <div class="flex gap-4">
-            <img src="${item.image}" alt="${item.name}" class="w-20 h-20 object-cover rounded">
-            <div class="flex-1">
-              <h3 class="text-xl font-bold mb-2">${item.name}</h3>
-              <p class="text-sm text-gray-600 mb-2">${item.category}</p>
-              <p class="mb-2">${item.description}</p>
-              <p class="font-semibold text-primary">KSH ${item.price}</p>
-            </div>
-          </div>
+ function renderMerch() {
+  const merch = getStoredData(MERCH_KEY, defaultMerch);
+  merchList.innerHTML = merch.length ? '' : '<p class="text-gray-500">No merchandise loaded.</p>';
+  
+  merch.forEach((m, index) => {
+    const div = document.createElement('div');
+    div.className = 'flex justify-between items-center p-4 bg-gray-50 rounded-custom border border-gray-200';
+    div.innerHTML = `
+      <div class="flex items-center gap-4">
+        <div class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded font-mono">IMG: ${m.image || 'N/A'}</div>
+        <div>
+          <strong class="text-gray-800 text-base">${m.name}</strong> 
+          <span class="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded ml-2 font-medium">${m.category}</span>
+          <p class="text-sm text-gray-600 mt-1">${m.description || 'No description provided.'}</p>
+          <p class="text-sm text-primary font-bold mt-1">KSH ${m.price.toLocaleString()}</p>
         </div>
-      `).join('');
-    }
+      </div>
+      <button onclick="deleteItem('${MERCH_KEY}', ${index}, renderMerch)" class="text-red-500 hover:text-red-700 font-medium text-sm transition-colors">Delete</button>
+    `;
+    merchList.appendChild(div);
+  });
+}
 
     // Event listeners
     function showUnauthorized() {
@@ -1315,20 +1318,28 @@
     }
 
     // Merchandise form handlers
-    merchForm.addEventListener('submit', async event => {
-      event.preventDefault();
-      const formData = new FormData(merchForm);
-      const merchImageFile = formData.get('merchImage');
-      const merchImage = merchImageFile && merchImageFile.size ? await readFileInput(merchImageFile) : '';
+    merchForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const merch = getStoredData(MERCH_KEY, defaultMerch);
+      const fd = new FormData(merchForm);
 
-      addMerchItem(
-        formData.get('merchName').trim(),
-        formData.get('merchPrice'),
-        merchImage,
-        formData.get('merchCategory').trim(),
-        formData.get('merchDescription').trim()
-      );
+      // Extract the file name safely if an image was uploaded
+      const imageFile = fd.get('merchImage');
+      const imageName = imageFile ? imageFile.name : 'default-merch.jpg';
+
+      merch.push({
+        id: generateId(),
+        name: fd.get('merchName'),
+        price: Number(fd.get('merchPrice')),
+        category: fd.get('merchCategory'),
+        description: fd.get('merchDescription'),
+        image: imageName // Tracks your chosen image file name
+      });
+      
+      saveData(MERCH_KEY, merch);
       merchForm.reset();
+      renderMerch(); // Force view update immediately
+      alert('Merchandise added successfully!');
     });
 
     clearMerchButton.addEventListener('click', () => {
