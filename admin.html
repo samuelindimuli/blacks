@@ -257,6 +257,55 @@
           </section>
         </div>
 
+        <!-- Upcoming Events Tab -->
+        <div id="upcomingEventsTab" class="tab-content hidden">
+          <section class="bg-white rounded-custom shadow-md p-8">
+            <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
+              <div>
+                <h2 class="text-2xl font-bold">Add Upcoming Event</h2>
+                <p class="text-gray-500">Create upcoming events that will be managed from the admin page.</p>
+              </div>
+              <button id="clearUpcomingEvents" class="btn btn-outline self-start">Clear All Upcoming Events</button>
+            </div>
+
+            <form id="upcomingEventForm" class="space-y-6">
+              <input type="hidden" id="upcomingEventIdInput" name="upcomingEventId" value="">
+              <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label class="block text-sm font-medium mb-2">Event Title</label>
+                  <input type="text" name="upcomingEventTitle" required class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-2">Date</label>
+                  <input type="date" name="upcomingEventDate" required class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-2">Location</label>
+                <input type="text" name="upcomingEventLocation" required class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-2">Poster Image</label>
+                <input type="file" name="upcomingEventPoster" accept="image/*" class="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-light hover:file:bg-[#E04E00]">
+                <p class="text-xs text-gray-500 mt-2">Choose an image for the upcoming event poster.</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-2">Description</label>
+                <textarea name="upcomingEventDescription" rows="3" required class="w-full px-4 py-3 border border-gray-300 rounded-custom focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"></textarea>
+              </div>
+              <div class="flex flex-wrap gap-3">
+                <button type="submit" id="upcomingEventSubmitBtn" class="btn btn-primary">Create Upcoming Event</button>
+                <button type="button" id="upcomingEventCancelBtn" class="btn btn-outline hidden">Cancel</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="bg-white rounded-custom shadow-md p-8 mt-8">
+            <h2 class="text-2xl font-bold mb-6">Current Upcoming Events</h2>
+            <div id="upcomingEventsList" class="grid gap-4"></div>
+          </section>
+        </div>
+
         <!-- Merchandise Tab -->
         <div id="merchTab" class="tab-content hidden">
           <section class="bg-white rounded-custom shadow-md p-8">
@@ -444,18 +493,17 @@
     const addTicketPackageButton = document.getElementById('addTicketPackage');
     const ticketPackages = document.getElementById('ticketPackages');
 
+    // Merchandise
+    const merchForm = document.getElementById('merchForm');
+    const merchList = document.getElementById('merchList');
+    const clearMerchButton = document.getElementById('clearMerch');
+
     // Upcoming Events
     const upcomingEventForm = document.getElementById('upcomingEventForm');
     const upcomingEventsList = document.getElementById('upcomingEventsList');
     const clearUpcomingEventsButton = document.getElementById('clearUpcomingEvents');
     const upcomingEventCancelBtn = document.getElementById('upcomingEventCancelBtn');
     const upcomingEventSubmitBtn = document.getElementById('upcomingEventSubmitBtn');
-    const upcomingEventIdInput = document.getElementById('upcomingEventIdInput');
-
-    // Merchandise
-    const merchForm = document.getElementById('merchForm');
-    const merchList = document.getElementById('merchList');
-    const clearMerchButton = document.getElementById('clearMerch');
 
     // Analytics
     const siteVisitsEl = document.getElementById('siteVisits');
@@ -765,7 +813,6 @@
       saveEvents(events);
     }
 
-    // Upcoming Events functions
     function getStoredUpcomingEvents() {
       return getStoredData(UPCOMING_EVENTS_KEY, defaultUpcomingEvents);
     }
@@ -776,7 +823,7 @@
     }
 
     function getUpcomingEventById(eventId) {
-      return getStoredUpcomingEvents().find((event) => event.id === eventId);
+      return getStoredUpcomingEvents().find(event => event.id === eventId);
     }
 
     function addUpcomingEvent(title, date, location, description, poster) {
@@ -786,46 +833,54 @@
     }
 
     function updateUpcomingEvent(updatedEvent) {
-      const events = getStoredUpcomingEvents().map((event) => event.id === updatedEvent.id ? updatedEvent : event);
+      const events = getStoredUpcomingEvents().map(event => event.id === updatedEvent.id ? updatedEvent : event);
       saveUpcomingEvents(events);
     }
 
     function deleteUpcomingEvent(eventId) {
-      const events = getStoredUpcomingEvents().filter((event) => event.id !== eventId);
+      const events = getStoredUpcomingEvents().filter(event => event.id !== eventId);
       saveUpcomingEvents(events);
     }
 
     function populateUpcomingEventForm(eventData) {
-      if (!upcomingEventForm) return;
-      upcomingEventIdInput.value = eventData.id;
-      upcomingEventForm.querySelector('input[name="upcomingEventTitle"]').value = eventData.title;
-      upcomingEventForm.querySelector('input[name="upcomingEventDate"]').value = eventData.date;
-      upcomingEventForm.querySelector('input[name="upcomingEventLocation"]').value = eventData.location;
-      upcomingEventForm.querySelector('textarea[name="upcomingEventDescription"]').value = eventData.description;
-      upcomingEventForm.querySelector('input[name="upcomingEventPoster"]').value = '';
-      if (upcomingEventSubmitBtn) upcomingEventSubmitBtn.textContent = 'Update Upcoming Event';
-      if (upcomingEventCancelBtn) upcomingEventCancelBtn.classList.remove('hidden');
+      const eventIdInput = document.getElementById('upcomingEventIdInput');
+      const submitBtn = document.getElementById('upcomingEventSubmitBtn');
+      const cancelBtn = document.getElementById('upcomingEventCancelBtn');
+
+      if (eventIdInput) eventIdInput.value = eventData.id;
+      if (upcomingEventForm) {
+        upcomingEventForm.querySelector('input[name="upcomingEventTitle"]').value = eventData.title;
+        upcomingEventForm.querySelector('input[name="upcomingEventDate"]').value = eventData.date;
+        upcomingEventForm.querySelector('input[name="upcomingEventLocation"]').value = eventData.location;
+        upcomingEventForm.querySelector('textarea[name="upcomingEventDescription"]').value = eventData.description;
+        upcomingEventForm.querySelector('input[name="upcomingEventPoster"]').value = '';
+      }
+      if (submitBtn) submitBtn.textContent = 'Update Upcoming Event';
+      if (cancelBtn) cancelBtn.classList.remove('hidden');
     }
 
     function resetUpcomingEventForm() {
-      if (!upcomingEventForm) return;
-      upcomingEventIdInput.value = '';
-      upcomingEventForm.reset();
-      if (upcomingEventSubmitBtn) upcomingEventSubmitBtn.textContent = 'Create Upcoming Event';
-      if (upcomingEventCancelBtn) upcomingEventCancelBtn.classList.add('hidden');
+      const eventIdInput = document.getElementById('upcomingEventIdInput');
+      const submitBtn = document.getElementById('upcomingEventSubmitBtn');
+      const cancelBtn = document.getElementById('upcomingEventCancelBtn');
+
+      if (eventIdInput) eventIdInput.value = '';
+      if (upcomingEventForm) upcomingEventForm.reset();
+      if (submitBtn) submitBtn.textContent = 'Create Upcoming Event';
+      if (cancelBtn) cancelBtn.classList.add('hidden');
     }
 
     function hydrateUpcomingEventListActions() {
-      if (!upcomingEventsList) return;
-      upcomingEventsList.querySelectorAll('.upcoming-event-edit-btn').forEach((button) => {
+      upcomingEventsList.querySelectorAll('.upcoming-event-edit-btn').forEach(button => {
         button.addEventListener('click', () => {
           const eventId = button.dataset.eventId;
           const eventData = getUpcomingEventById(eventId);
-          if (eventData) populateUpcomingEventForm(eventData);
+          if (!eventData) return;
+          populateUpcomingEventForm(eventData);
         });
       });
 
-      upcomingEventsList.querySelectorAll('.upcoming-event-delete-btn').forEach((button) => {
+      upcomingEventsList.querySelectorAll('.upcoming-event-delete-btn').forEach(button => {
         button.addEventListener('click', () => {
           const eventId = button.dataset.eventId;
           if (!confirm('Are you sure you want to delete this upcoming event?')) return;
@@ -841,7 +896,7 @@
         upcomingEventsList.innerHTML = '<p class="text-gray-500">No upcoming events available yet.</p>';
         return;
       }
-      upcomingEventsList.innerHTML = events.map((event) => `
+      upcomingEventsList.innerHTML = events.map(event => `
         <div class="border border-gray-200 rounded-custom p-5 bg-gray-50" data-event-id="${event.id}">
           ${event.poster ? `<img src="${event.poster}" alt="${event.title} poster" class="w-full h-40 object-cover rounded-custom mb-4">` : ''}
           <h3 class="text-xl font-bold mb-2">${event.title}</h3>
@@ -1174,7 +1229,7 @@
     });
 
     if (upcomingEventForm) {
-      upcomingEventForm.addEventListener('submit', async (event) => {
+      upcomingEventForm.addEventListener('submit', async event => {
         event.preventDefault();
         const formData = new FormData(upcomingEventForm);
         const posterFile = formData.get('upcomingEventPoster');

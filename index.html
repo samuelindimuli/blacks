@@ -7,7 +7,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="config.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -411,7 +410,61 @@ Choreographer, content Guru and interior designer able to execute tasks and inno
         <h2 class="section-title">Upcoming Events</h2>
       </div>
       
-      <div id="upcomingEventsGrid" class="events-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-12"></div>
+      <div id="upcomingEventsContainer" class="events-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
+        <!-- Static fallback content (will be replaced if local upcoming events exist) -->
+        <div class="event-card bg-light rounded-custom overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-3 hover:shadow-md">
+          <div class="event-image h-48 overflow-hidden">
+            <img src="pics/poster1.jpg" alt="Urban Sunday" class="w-full h-full object-cover transition-all duration-300 hover:scale-105">
+          </div>
+          <div class="p-6">
+            <h3 class="text-xl font-bold mb-2 text-text">Urban Sunday</h3>
+            <p class="text-text mb-4">Join us for an unforgettable day of music, dance, and fun at our Urban sunday.</p>
+            <a href="#" class="btn btn-small btn-primary">Learn More</a>
+          </div>
+        </div>
+
+        <div class="event-card bg-light rounded-custom overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-3 hover:shadow-md">
+          <div class="event-image h-48 overflow-hidden">
+            <img src="pics/poster2.jpg" alt="Winter Dance Party" class="w-full h-full object-cover transition-all duration-300 hover:scale-105">
+          </div>
+          <div class="p-6">
+            <h3 class="text-xl font-bold mb-2 text-text">Urban Sunday 2</h3>
+            <p class="text-text mb-4">Get ready to groove at our Urban sunday with hot beats and cool vibes.</p>
+            <a href="#" class="btn btn-small btn-primary">Learn More</a>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        (function renderPublicUpcomingEvents(){
+          try {
+            const key = 'ec_upcoming_events';
+            const container = document.getElementById('upcomingEventsContainer');
+            if (!container) return;
+            const raw = localStorage.getItem(key);
+            if (!raw) return; // keep fallback
+            const events = JSON.parse(raw);
+            if (!Array.isArray(events) || events.length === 0) return;
+
+            const html = events.map(ev => `
+              <div class="event-card bg-light rounded-custom overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-3 hover:shadow-md">
+                <div class="event-image h-48 overflow-hidden">
+                  <img src="${ev.poster || 'pics/poster1.jpg'}" alt="${(ev.title||'Upcoming Event').replace(/"/g,'') }" class="w-full h-full object-cover transition-all duration-300 hover:scale-105">
+                </div>
+                <div class="p-6">
+                  <h3 class="text-xl font-bold mb-2 text-text">${ev.title || 'Untitled'}</h3>
+                  <p class="text-text mb-4">${(ev.description || '').substring(0,140)}</p>
+                  <a href="ticketing.html?eventId=${ev.id}" class="btn btn-small btn-primary">Learn More</a>
+                </div>
+              </div>
+            `).join('');
+
+            container.innerHTML = html;
+          } catch (e) {
+            console.error('Failed to render upcoming events', e);
+          }
+        })();
+      </script>
     </div>
   </section>
 
@@ -655,62 +708,6 @@ entertainment.</p>
       }
     });
   }
-</script>
-
-<script>
-  function getStoredData(key, defaultData) {
-    const stored = localStorage.getItem(key);
-    if (!stored) {
-      if (defaultData !== undefined) {
-        localStorage.setItem(key, JSON.stringify(defaultData));
-        return Array.isArray(defaultData) ? defaultData : [];
-      }
-      return [];
-    }
-
-    try {
-      const parsed = JSON.parse(stored);
-      return Array.isArray(parsed) ? parsed : (Array.isArray(defaultData) ? defaultData : []);
-    } catch (e) {
-      if (defaultData !== undefined) {
-        localStorage.setItem(key, JSON.stringify(defaultData));
-        return Array.isArray(defaultData) ? defaultData : [];
-      }
-      return [];
-    }
-  }
-
-  function renderUpcomingEvents() {
-    const config = window.EC_CONFIG || {};
-    const key = config.upcomingEventsKey || 'ec_upcoming_events';
-    const defaults = config.defaultUpcomingEvents || [];
-    const events = getStoredData(key, defaults);
-    const grid = document.getElementById('upcomingEventsGrid');
-
-    if (!grid) return;
-    if (!events.length) {
-      grid.innerHTML = '<p class="text-gray-500">No upcoming events available yet. Check back soon for new updates.</p>';
-      return;
-    }
-
-    grid.innerHTML = events.map(event => `
-      <div class="event-card bg-light rounded-custom overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-3 hover:shadow-md">
-        ${event.poster ? `
-        <div class="event-image h-48 overflow-hidden">
-          <img src="${event.poster}" alt="${event.title || 'Upcoming Event'}" class="w-full h-full object-cover transition-all duration-300 hover:scale-105">
-        </div>
-        ` : ''}
-        <div class="p-6">
-          <h3 class="text-xl font-bold mb-2 text-text">${event.title || 'Upcoming Event'}</h3>
-          <p class="text-sm text-text mb-2">${event.date || ''}${event.location ? ' • ' + event.location : ''}</p>
-          <p class="text-text mb-4">${event.description || ''}</p>
-          <a href="#" class="btn btn-small btn-primary">Learn More</a>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  document.addEventListener('DOMContentLoaded', renderUpcomingEvents);
 </script>
   
 </body>

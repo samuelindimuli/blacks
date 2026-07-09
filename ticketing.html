@@ -677,6 +677,25 @@
     document.addEventListener('DOMContentLoaded', () => {
       renderEvents();
       restorePersistedState();
+      // If an eventId is in the URL, scroll to and highlight that event
+      (function highlightEventFromUrl(){
+        try {
+          const params = new URLSearchParams(window.location.search);
+          const eventId = params.get('eventId');
+          if (!eventId) return;
+          // Give renderEvents a moment to finish and DOM to populate
+          setTimeout(() => {
+            const el = document.querySelector(`[data-event-id="${eventId}"]`);
+            if (!el) return;
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.classList.add('ring-4', 'ring-primary/40');
+            setTimeout(() => { el.classList.remove('ring-4', 'ring-primary/40'); }, 4000);
+          }, 300);
+        } catch (e) {
+          console.error('Error highlighting event from URL', e);
+        }
+      })();
+
       // Refresh events every 5 seconds to catch admin updates
       setInterval(renderEvents, 5000);
     });
