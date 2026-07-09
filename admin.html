@@ -97,6 +97,7 @@
           <div class="flex flex-wrap gap-2">
             <button id="tabContent" class="btn btn-primary tab-btn active" data-tab="content">Content</button>
             <button id="tabEvents" class="btn btn-outline tab-btn" data-tab="events">Events</button>
+            <button id="tabUpcomingEvents" class="btn btn-outline tab-btn" data-tab="upcomingEvents">Upcoming Events</button>
             <button id="tabMerch" class="btn btn-outline tab-btn" data-tab="merch">Merchandise</button>
             <button id="tabAnalytics" class="btn btn-outline tab-btn" data-tab="analytics">Analytics</button>
           </div>
@@ -378,6 +379,7 @@
     const ADMIN_TOKEN = EC.adminToken || 'enjoyment-admin-token';
     const STORAGE_KEY = EC.storageKey || 'ec_content_items';
     const EVENTS_KEY = EC.eventsKey || 'ec_events';
+    const UPCOMING_EVENTS_KEY = EC.upcomingEventsKey || 'ec_upcoming_events';
     const MERCH_KEY = EC.merchKey || 'ec_merchandise';
     const PURCHASES_KEY = EC.purchasesKey || 'ec_purchases';
     const ANALYTICS_KEY = EC.analyticsKey || 'ec_analytics';
@@ -442,6 +444,14 @@
     const addTicketPackageButton = document.getElementById('addTicketPackage');
     const ticketPackages = document.getElementById('ticketPackages');
 
+    // Upcoming Events
+    const upcomingEventForm = document.getElementById('upcomingEventForm');
+    const upcomingEventsList = document.getElementById('upcomingEventsList');
+    const clearUpcomingEventsButton = document.getElementById('clearUpcomingEvents');
+    const upcomingEventCancelBtn = document.getElementById('upcomingEventCancelBtn');
+    const upcomingEventSubmitBtn = document.getElementById('upcomingEventSubmitBtn');
+    const upcomingEventIdInput = document.getElementById('upcomingEventIdInput');
+
     // Merchandise
     const merchForm = document.getElementById('merchForm');
     const merchList = document.getElementById('merchList');
@@ -459,6 +469,7 @@
 
     const defaultItems = EC.defaultItems || [];
     const defaultEvents = EC.defaultEvents || [];
+    const defaultUpcomingEvents = EC.defaultUpcomingEvents || [];
     const defaultMerch = EC.defaultMerch || [];
 
     // Tab switching
@@ -754,6 +765,97 @@
       saveEvents(events);
     }
 
+    // Upcoming Events functions
+    function getStoredUpcomingEvents() {
+      return getStoredData(UPCOMING_EVENTS_KEY, defaultUpcomingEvents);
+    }
+
+    function saveUpcomingEvents(events) {
+      saveData(UPCOMING_EVENTS_KEY, events);
+      renderUpcomingEvents();
+    }
+
+    function getUpcomingEventById(eventId) {
+      return getStoredUpcomingEvents().find((event) => event.id === eventId);
+    }
+
+    function addUpcomingEvent(title, date, location, description, poster) {
+      const events = getStoredUpcomingEvents();
+      events.unshift({ id: `upcoming-${Date.now()}`, title, date, location, description, poster });
+      saveUpcomingEvents(events);
+    }
+
+    function updateUpcomingEvent(updatedEvent) {
+      const events = getStoredUpcomingEvents().map((event) => event.id === updatedEvent.id ? updatedEvent : event);
+      saveUpcomingEvents(events);
+    }
+
+    function deleteUpcomingEvent(eventId) {
+      const events = getStoredUpcomingEvents().filter((event) => event.id !== eventId);
+      saveUpcomingEvents(events);
+    }
+
+    function populateUpcomingEventForm(eventData) {
+      if (!upcomingEventForm) return;
+      upcomingEventIdInput.value = eventData.id;
+      upcomingEventForm.querySelector('input[name="upcomingEventTitle"]').value = eventData.title;
+      upcomingEventForm.querySelector('input[name="upcomingEventDate"]').value = eventData.date;
+      upcomingEventForm.querySelector('input[name="upcomingEventLocation"]').value = eventData.location;
+      upcomingEventForm.querySelector('textarea[name="upcomingEventDescription"]').value = eventData.description;
+      upcomingEventForm.querySelector('input[name="upcomingEventPoster"]').value = '';
+      if (upcomingEventSubmitBtn) upcomingEventSubmitBtn.textContent = 'Update Upcoming Event';
+      if (upcomingEventCancelBtn) upcomingEventCancelBtn.classList.remove('hidden');
+    }
+
+    function resetUpcomingEventForm() {
+      if (!upcomingEventForm) return;
+      upcomingEventIdInput.value = '';
+      upcomingEventForm.reset();
+      if (upcomingEventSubmitBtn) upcomingEventSubmitBtn.textContent = 'Create Upcoming Event';
+      if (upcomingEventCancelBtn) upcomingEventCancelBtn.classList.add('hidden');
+    }
+
+    function hydrateUpcomingEventListActions() {
+      if (!upcomingEventsList) return;
+      upcomingEventsList.querySelectorAll('.upcoming-event-edit-btn').forEach((button) => {
+        button.addEventListener('click', () => {
+          const eventId = button.dataset.eventId;
+          const eventData = getUpcomingEventById(eventId);
+          if (eventData) populateUpcomingEventForm(eventData);
+        });
+      });
+
+      upcomingEventsList.querySelectorAll('.upcoming-event-delete-btn').forEach((button) => {
+        button.addEventListener('click', () => {
+          const eventId = button.dataset.eventId;
+          if (!confirm('Are you sure you want to delete this upcoming event?')) return;
+          deleteUpcomingEvent(eventId);
+        });
+      });
+    }
+
+    function renderUpcomingEvents() {
+      const events = getStoredUpcomingEvents();
+      if (!upcomingEventsList) return;
+      if (!events.length) {
+        upcomingEventsList.innerHTML = '<p class="text-gray-500">No upcoming events available yet.</p>';
+        return;
+      }
+      upcomingEventsList.innerHTML = events.map((event) => `
+        <div class="border border-gray-200 rounded-custom p-5 bg-gray-50" data-event-id="${event.id}">
+          ${event.poster ? `<img src="${event.poster}" alt="${event.title} poster" class="w-full h-40 object-cover rounded-custom mb-4">` : ''}
+          <h3 class="text-xl font-bold mb-2">${event.title}</h3>
+          <p class="text-sm text-gray-600 mb-2">${event.date} - ${event.location}</p>
+          <p class="mb-4">${event.description}</p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button type="button" class="upcoming-event-edit-btn btn btn-outline text-sm px-4 py-2" data-event-id="${event.id}">Edit</button>
+            <button type="button" class="upcoming-event-delete-btn btn btn-outline text-sm px-4 py-2 text-red-600 border-red-400 hover:bg-red-600 hover:text-white" data-event-id="${event.id}">Delete</button>
+          </div>
+        </div>
+      `).join('');
+      hydrateUpcomingEventListActions();
+    }
+
     // Merchandise functions
     function getStoredMerch() {
       return getStoredData(MERCH_KEY, defaultMerch);
@@ -922,6 +1024,7 @@
       }
       renderUploads();
       renderEvents();
+      renderUpcomingEvents();
       renderMerch();
       updateAnalyticsDisplay();
     }
@@ -1069,6 +1172,54 @@
       renderEvents();
       refreshEventSelect();
     });
+
+    if (upcomingEventForm) {
+      upcomingEventForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const formData = new FormData(upcomingEventForm);
+        const posterFile = formData.get('upcomingEventPoster');
+        const poster = posterFile && posterFile.size ? await readFileInput(posterFile) : '';
+        const eventId = formData.get('upcomingEventId')?.toString().trim();
+        const title = formData.get('upcomingEventTitle').trim();
+        const date = formData.get('upcomingEventDate');
+        const location = formData.get('upcomingEventLocation').trim();
+        const description = formData.get('upcomingEventDescription').trim();
+
+        if (eventId) {
+          const existing = getUpcomingEventById(eventId);
+          if (existing) {
+            updateUpcomingEvent({
+              ...existing,
+              title,
+              date,
+              location,
+              description,
+              poster: poster || existing.poster
+            });
+            resetUpcomingEventForm();
+            return;
+          }
+        }
+
+        addUpcomingEvent(title, date, location, description, poster);
+        resetUpcomingEventForm();
+      });
+    }
+
+    if (clearUpcomingEventsButton) {
+      clearUpcomingEventsButton.addEventListener('click', () => {
+        if (!confirm('Clear all upcoming events? This cannot be undone.')) return;
+        saveData(UPCOMING_EVENTS_KEY, []);
+        resetUpcomingEventForm();
+        renderUpcomingEvents();
+      });
+    }
+
+    if (upcomingEventCancelBtn) {
+      upcomingEventCancelBtn.addEventListener('click', () => {
+        resetUpcomingEventForm();
+      });
+    }
 
     const eventCancelBtn = document.getElementById('eventCancelBtn');
     if (eventCancelBtn) {
