@@ -283,7 +283,33 @@ function removeItem(idx) {
   renderCart();
 }
 function checkout() {
-  alert('Proceeding to checkout!');
+  const cart = getCart();
+  if (!cart.length) {
+    alert('Your cart is empty.');
+    return;
+  }
+
+  // Build order summary message
+  let subtotal = 0;
+  const lines = cart.map(item => {
+    const itemTotal = item.qty * parseInt(item.price);
+    subtotal += itemTotal;
+    return `${item.name} x${item.qty} - KSH ${itemTotal.toLocaleString()}`;
+  });
+
+  const message = `New order from website%0A%0AItems:%0A${encodeURIComponent(lines.join('%0A'))}%0A%0ASubtotal: KSH ${subtotal.toLocaleString()}%0A%0APlease contact the buyer to arrange delivery.`;
+
+  // WhatsApp number: replace leading 0 with country code 254
+  const phone = '254791615005';
+  const waUrl = `https://wa.me/${phone}?text=${message}`;
+
+  // Open WhatsApp in a new tab/window
+  window.open(waUrl, '_blank');
+
+  // Clear cart and update UI
+  setCart([]);
+  renderCart();
+  alert('Order sent to WhatsApp. We will contact you to confirm delivery.');
 }
 renderCart();
   </script>
